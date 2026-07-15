@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code-runner/internals/api/handlers"
 	"code-runner/internals/config"
 	"log"
 	"net/http"
@@ -28,5 +29,7 @@ func main() {
 		})
 	})
 
+	//runner route
+	router.POST("/run", handlers.RunCodeHandlerFunc(cfg))
 	router.Run(":" + cfg.Port)
 }

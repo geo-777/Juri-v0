@@ -1,2 +1,8 @@
-/tmp
 .env
+
+#air build files
+/tmp 
+
+
+#my root workspace dir 
+/temp-jobs
