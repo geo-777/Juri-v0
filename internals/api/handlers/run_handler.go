@@ -2,26 +2,42 @@ package handlers
 
 import (
 	"code-runner/internals/api/dtos"
-	"code-runner/internals/api/services"
-	"code-runner/internals/config"
+	"code-runner/internals/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RunCodeHandlerFunc(cfg *config.Config) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		//reading body
-		var reqBody dtos.RunRequestDto
+type RunHandler struct {
+	executionService *services.ExecutionService
+}
 
-		if err := ctx.ShouldBindJSON(&reqBody); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-
-		err := services.RunService(&reqBody, cfg)
-
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		}
+func NewRunHandler(service *services.ExecutionService) *RunHandler {
+	return &RunHandler{
+		executionService: service,
 	}
+}
+
+func (h *RunHandler) Run(ctx *gin.Context) {
+
+	var reqBody dtos.RunRequestDto
+
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err := h.executionService.Run(&reqBody)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Code executed successfully",
+	})
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"code-runner/internals/api/handlers"
 	"code-runner/internals/config"
+	"code-runner/internals/executor"
+	"code-runner/internals/services"
 	"log"
 	"net/http"
 
@@ -11,25 +13,33 @@ import (
 
 func main() {
 
-	//loading env configurations
+	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("Failed to load env files.")
-		return
+		log.Fatal("failed to load configuration:", err)
 	}
 
-	//router
-	var router *gin.Engine = gin.Default()
+	// Dependency Injection
+	exec := executor.New(cfg)
+	executionService := services.NewExecutionService(exec)
+	runHandler := handlers.NewRunHandler(executionService)
+
+	// Router setup
+	router := gin.Default()
 	router.SetTrustedProxies(nil)
-	//health route
+
+	// Health Check
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
-			"Health":   "Ok",
-			"Database": "Connected",
+			"health": "ok",
 		})
 	})
 
-	//runner route
-	router.POST("/run", handlers.RunCodeHandlerFunc(cfg))
-	router.Run(":" + cfg.Port)
+	// Routes
+	router.POST("/run", runHandler.Run)
+
+	// Start Server
+	if err := router.Run(":" + cfg.Port); err != nil {
+		log.Fatal(err)
+	}
 }
