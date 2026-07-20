@@ -22,7 +22,7 @@ func CreateWorkspace(language dtos.Language, sourceCode string, root string) (st
 	//prepare path
 	jobDir := filepath.Join(root, "job-"+id)
 	//creates necessary stuff
-	if err := os.MkdirAll(jobDir, 0755); err != nil {
+	if err := os.MkdirAll(jobDir, 0777); err != nil {
 		return "", err
 	}
 

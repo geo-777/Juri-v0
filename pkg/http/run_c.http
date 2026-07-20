@@ -1,0 +1,7 @@
+POST http://localhost:8000/run
+Content-Type: application/json
+
+{
+  "language": "c",
+  "source_code": "#include <stdio.h>\n\nint main() {\n    int i = 1;\n    while (i <= 5) {\n        printf(\"Hello World %d\\n\", i);\n        i++;\n    }\n    return 0;\n}"
+}

@@ -1,0 +1,7 @@
+POST http://localhost:8000/run
+Content-Type: application/json
+
+{
+  "language": "python",
+  "source_code": "i = 1\nwhile i <= 5:\n    print(f\"Hello World {i}\")\n    i += 1"
+}

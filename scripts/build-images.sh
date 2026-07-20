@@ -18,7 +18,7 @@ echo "Building cpp image..."
 docker build -t juri/cpp "$PROJECT_DIR/docker/cpp"
 
 echo "Building c image..."
-docker build -t juri/c "$PROJECT_DIR/docker/cpp"
+docker build -t juri/c "$PROJECT_DIR/docker/c"
 
 
 echo "Building java image..."

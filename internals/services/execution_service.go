@@ -20,11 +20,8 @@ func (s *ExecutionService) Run(req *dtos.RunRequestDto) error {
 	_, err := s.executor.Execute(
 		req.Language,
 		req.SourceCode,
+		req.Stdin,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

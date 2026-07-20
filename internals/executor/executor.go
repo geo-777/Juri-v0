@@ -15,7 +15,7 @@ func New(cfg *config.Config) *Executor {
 	}
 }
 
-func (e *Executor) Execute(language dtos.Language, sourceCode string) (string, error) {
+func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn string) (string, error) {
 	//handles creation of workspace
 	filePath, err := CreateWorkspace(
 		language,
@@ -28,7 +28,11 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string) (string, e
 	}
 
 	// Docker
-	err = e.RunDocker(filePath)
+	err = e.RunDocker(filePath, language)
+
+	if err != nil {
+		return "", err
+	}
 
 	// Execute
 	// Cleanup
