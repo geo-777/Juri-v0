@@ -2,11 +2,11 @@
 
 set -e
 
-g++ main.cpp -std=c++20 -O2 -o main
+javac Main.java
 
 START=$(date +%s%N)
 
-./main
+java Main
 
 END=$(date +%s%N)
 

@@ -2,7 +2,7 @@
 
 set -e
 
-g++ main.cpp -std=c++20 -O2 -o main
+gcc main.c -std=c11 -O2 -o main
 
 START=$(date +%s%N)
 

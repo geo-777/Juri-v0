@@ -1,4 +1,4 @@
-FROM gcc:14
+FROM eclipse-temurin:17-jdk-jammy
 #installs time for calculating runtime
 RUN apt-get update && apt-get install -y time 
 #creating unprivileged user
