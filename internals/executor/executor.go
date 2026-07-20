@@ -27,8 +27,9 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string) (string, e
 		return "", err
 	}
 
-	// Compile
 	// Docker
+	err = e.RunDocker(filePath)
+
 	// Execute
 	// Cleanup
 
