@@ -1,15 +1,22 @@
 #!/bin/sh
 
-set -e
+set +e
 
-gcc main.c -std=c11 -O2 -o main
+gcc main.c -O2 -o main
 
 START=$(date +%s%N)
 
-/usr/bin/time -f "__MEMORY_KB__=%M" ./main
+/usr/bin/time -f "%M" -o /tmp/memory.tmp ./main
+EXIT_CODE=$?
 
 END=$(date +%s%N)
 
 RUNTIME=$((END - START))
 
-echo "__RUNTIME_NS__=$RUNTIME"
+cat > /workspace/metadata.txt <<EOF
+runtime_ns=$RUNTIME
+memory_kb=$(cat /tmp/memory.tmp)
+exit_code=$EXIT_CODE
+EOF
+
+exit $EXIT_CODE
