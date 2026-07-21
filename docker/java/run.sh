@@ -6,7 +6,7 @@ javac Main.java
 
 START=$(date +%s%N)
 
-java Main
+/usr/bin/time -f "__MEMORY_KB__=%M" java Main
 
 END=$(date +%s%N)
 

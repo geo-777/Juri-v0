@@ -6,7 +6,7 @@ gcc main.c -std=c11 -O2 -o main
 
 START=$(date +%s%N)
 
-./main
+/usr/bin/time -f "__MEMORY_KB__=%M" ./main
 
 END=$(date +%s%N)
 
