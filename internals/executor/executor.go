@@ -9,15 +9,19 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/moby/moby/client"
 )
 
 type Executor struct {
-	cfg *config.Config
+	cfg          *config.Config
+	dockerClient *client.Client
 }
 
-func New(cfg *config.Config) *Executor {
+func New(cfg *config.Config, client *client.Client) *Executor {
 	return &Executor{
-		cfg: cfg,
+		cfg:          cfg,
+		dockerClient: client,
 	}
 }
 

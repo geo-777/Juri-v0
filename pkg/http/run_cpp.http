@@ -3,5 +3,5 @@ Content-Type: application/json
 
 {
   "language": "cpp",
-  "source_code": "#include <iostream>\n\nint main() {\n    int i = 1;\n    while (i <= 5) {\n        std::cout << \"Hello World \" << i << std::endl;\n        i++;\n    }\n    return 0;\n}"
+  "source_code": "int main() {\n    int *p = nullptr;\n    *p = 5;\n}"
 }

@@ -21,6 +21,7 @@ var imageNames = map[dtos.Language]string{
 }
 
 func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, string, error) {
+
 	//creating id for identify container
 	id, err := gonanoid.Generate("abcdefghijklmnopqrstuvwxyz0123456789", 10)
 	if err != nil {

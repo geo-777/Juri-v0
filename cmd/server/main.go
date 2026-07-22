@@ -9,9 +9,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/moby/moby/client"
 )
 
 func main() {
+	//init docker client
+	dockerClient, err := client.New(client.FromEnv)
+	if err != nil {
+		panic(err)
+	}
+	defer dockerClient.Close()
 
 	// Load configuration
 	cfg, err := config.Load()
@@ -20,7 +27,7 @@ func main() {
 	}
 
 	// Dependency Injection
-	exec := executor.New(cfg)
+	exec := executor.New(cfg, dockerClient)
 	executionService := services.NewExecutionService(exec)
 	runHandler := handlers.NewRunHandler(executionService)
 
