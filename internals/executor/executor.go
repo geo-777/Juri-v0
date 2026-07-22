@@ -4,6 +4,7 @@ import (
 	"code-runner/internals/api/dtos"
 	"code-runner/internals/config"
 	"code-runner/pkg/constants"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -21,8 +22,8 @@ func New(cfg *config.Config) *Executor {
 }
 
 type ExecutionMetadata struct {
-	RuntimeNS int
-	MemoryKB  int
+	RuntimeNS int64
+	MemoryKB  int64
 	ExitCode  int
 }
 type ExecutionData struct {
@@ -45,14 +46,15 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 	if err != nil {
 		return ExecutionData{}, err
 	}
-
+	//iniates cleanup on return
+	defer cleanupDir(filePath)
 	// Docker
-	executionOutput, executionError, err := e.RunDocker(filePath, language)
+	stdout, stderr, err := e.RunDocker(filePath, language)
 
 	if err != nil {
 		erroredOutput := ExecutionData{
 			Metadata: ExecutionMetadata{ExitCode: 1},
-			Output:   executionOutput, Stderr: executionError,
+			Output:   stdout, Stderr: stderr,
 		}
 
 		if err.Error() == "time limit exceeded" {
@@ -61,7 +63,7 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 
 		return erroredOutput, nil
 	}
-	executionData.Output = executionOutput
+	executionData.Output = stdout
 
 	//parsing output to fetch memory and time
 	metaData, err := getMetaData(filePath)
@@ -70,9 +72,7 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 		return ExecutionData{}, err
 	}
 	executionData.Metadata = metaData
-	// Execute
-	// Cleanup
-
+	executionData.Status = constants.StatusSuccess
 	return executionData, nil
 }
 
@@ -93,10 +93,10 @@ func getMetaData(filePath string) (ExecutionMetadata, error) {
 		switch {
 
 		case strings.HasPrefix(line, "runtime_ns="):
-			meta.RuntimeNS, err = strconv.Atoi(strings.TrimPrefix(line, "runtime_ns="))
+			meta.RuntimeNS, err = strconv.ParseInt(strings.TrimPrefix(line, "runtime_ns="), 10, 64)
 
 		case strings.HasPrefix(line, "memory_kb="):
-			meta.MemoryKB, err = strconv.Atoi(strings.TrimPrefix(line, "memory_kb="))
+			meta.MemoryKB, err = strconv.ParseInt(strings.TrimPrefix(line, "memory_kb="), 10, 64)
 
 		case strings.HasPrefix(line, "exit_code="):
 			meta.ExitCode, err = strconv.Atoi(strings.TrimPrefix(line, "exit_code="))
@@ -107,4 +107,11 @@ func getMetaData(filePath string) (ExecutionMetadata, error) {
 	}
 
 	return meta, nil
+}
+
+// cleansup workspace-dir
+func cleanupDir(filePath string) {
+	if err := RemoveWorkspace(filePath); err != nil {
+		log.Printf("Failed to remove workspace : %v", err)
+	}
 }

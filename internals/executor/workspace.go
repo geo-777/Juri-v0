@@ -55,3 +55,11 @@ func CreateWorkspace(language dtos.Language, sourceCode string, root string) (st
 	//returns file path if successful creation
 	return filePath, nil
 }
+
+func RemoveWorkspace(filePath string) error {
+	targetDir := filepath.Dir(filePath)
+
+	err := os.RemoveAll(targetDir)
+
+	return err
+}
