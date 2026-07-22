@@ -15,13 +15,24 @@ func NewExecutionService(executor *executor.Executor) *ExecutionService {
 	}
 }
 
-func (s *ExecutionService) Run(req *dtos.RunRequestDto) error {
+func (s *ExecutionService) Run(req *dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 
-	_, err := s.executor.Execute(
+	responseData, err := s.executor.Execute(
 		req.Language,
 		req.SourceCode,
 		req.Stdin,
 	)
 
-	return err
+	if err != nil {
+		return &dtos.RunResponseDto{}, err
+	}
+
+	return &dtos.RunResponseDto{
+		Stdout:          responseData.Output,
+		ExecutionTimeNs: responseData.Metadata.RuntimeNS,
+		MemoryKB:        responseData.Metadata.MemoryKB,
+		ExitCode:        responseData.Metadata.ExitCode,
+		Stderr:          responseData.Stderr,
+		Status:          responseData.Status,
+	}, nil
 }

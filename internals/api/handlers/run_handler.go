@@ -29,7 +29,7 @@ func (h *RunHandler) Run(ctx *gin.Context) {
 		return
 	}
 
-	err := h.executionService.Run(&reqBody)
+	data, err := h.executionService.Run(&reqBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -37,7 +37,5 @@ func (h *RunHandler) Run(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Code executed successfully",
-	})
+	ctx.JSON(http.StatusOK, data)
 }

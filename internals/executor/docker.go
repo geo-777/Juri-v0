@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bytes"
 	"code-runner/internals/api/dtos"
 	"context"
 	"fmt"
@@ -19,7 +20,7 @@ var imageNames = map[dtos.Language]string{
 	dtos.Python: "juri/python",
 }
 
-func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, error) {
+func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, string, error) {
 	//creating id for identify container
 	id, err := gonanoid.Generate("abcdefghijklmnopqrstuvwxyz0123456789", 10)
 	if err != nil {
@@ -32,7 +33,7 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, e
 	absFilePath, err := filepath.Abs(filepath.Dir(filePath))
 	if err != nil {
 		fmt.Printf("Error resolving path: %v\n", err)
-		return "", err
+		return "", "", err
 	}
 	//executing docker
 	runCmd := exec.CommandContext(
@@ -47,15 +48,18 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, e
 		"--cpus=1",
 		imageNames[language],
 	)
-	output, err := runCmd.CombinedOutput()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	//sets destination for output and error
+	runCmd.Stdout = &stdout
+	runCmd.Stderr = &stderr
 
+	err = runCmd.Run()
 	//handles infinte loops
 	if ctx.Err() == context.DeadlineExceeded {
 		exec.Command("docker", "rm", "-f", id).Run()
-		return "", fmt.Errorf("time limit exceeded")
+		return "", "", fmt.Errorf("time limit exceeded")
 	}
 
-	fmt.Print(string(output))
-
-	return string(output), err
+	return stdout.String(), stderr.String(), err
 }

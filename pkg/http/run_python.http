@@ -6,7 +6,8 @@ Content-Type: application/json
   "language": "python",
   "source_code": "while True:\n\tpass"
 }
-{
-  "language": "python",
-  "source_code": "i = 1\nwhile i <= 5:\n    print(f\"Hello World {i}\")\n    i += 1"
-}
+
+# {
+#   "language": "python",
+#   "source_code": "i = 1\nwhile i <= 5\n    print(f\"Hello World {i}\")\n    i += 1"
+# }
