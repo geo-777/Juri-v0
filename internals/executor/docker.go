@@ -94,6 +94,7 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (*DockerRu
 	if err != nil {
 		return &DockerRunResponse{}, err
 	}
+	fmt.Println(inspect.Container.HostConfig.Memory)
 	//logs
 	reader, err := e.dockerClient.ContainerLogs(dockerCtx, resp.ID,
 		client.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})

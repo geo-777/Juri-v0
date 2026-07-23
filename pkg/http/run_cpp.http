@@ -3,5 +3,5 @@ Content-Type: application/json
 
 {
   "language": "cpp",
-  "source_code": "int main() {\n    int *p = nullptr;\n    *p = 5;\n}"
+  "source_code": "#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<std::vector<char>> v;\n    while (true) {\n        v.emplace_back(1024 * 1024, 'A');\n        std::cout << v.size() << std::endl;\n    }\n}"
 }

@@ -29,6 +29,7 @@ type ExecutionMetadata struct {
 	RuntimeNS int64
 	MemoryKB  int64
 	ExitCode  int
+	Phase     string
 }
 type ExecutionData struct {
 	Stderr   string
@@ -71,6 +72,10 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 		if err != nil {
 			return ExecutionData{}, err
 		}
+
+		if metaData.Phase == "COMPILATION" {
+			dockerResponse.Status = constants.StatusCompilationError
+		}
 	} else {
 		metaData.ExitCode = 1 //for TLEs
 	}
@@ -107,6 +112,8 @@ func getMetaData(filePath string) (ExecutionMetadata, error) {
 
 		case strings.HasPrefix(line, "exit_code="):
 			meta.ExitCode, err = strconv.Atoi(strings.TrimPrefix(line, "exit_code="))
+		case strings.HasPrefix(line, "phase="):
+			meta.Phase = strings.TrimPrefix(line, "phase=")
 		}
 		if err != nil {
 			return ExecutionMetadata{}, err
