@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"code-runner/internals/api/dtos"
+	"code-runner/pkg/constants"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -14,6 +15,12 @@ import (
 	"github.com/moby/moby/client"
 )
 
+type DockerRunResponse struct {
+	Stdout string
+	Stderr string
+	Status constants.Status
+}
+
 // map for image names
 var imageNames = map[dtos.Language]string{
 	dtos.C:      "juri/c",
@@ -22,7 +29,7 @@ var imageNames = map[dtos.Language]string{
 	dtos.Python: "juri/python",
 }
 
-func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, string, error) {
+func (e *Executor) RunDocker(filePath string, language dtos.Language) (*DockerRunResponse, error) {
 
 	//creating id for identify container
 	id, err := gonanoid.Generate("abcdefghijklmnopqrstuvwxyz0123456789", 10)
@@ -30,18 +37,21 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, s
 		id = "abhcbjh"
 	}
 	//max time allowed for program is 3 second
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	dockerCtx := context.Background()
+
+	runCtx, cancel := context.WithTimeout(dockerCtx, 2*time.Second)
 	defer cancel()
 	//mounting requires absolute path
 	absFilePath, err := filepath.Abs(filepath.Dir(filePath))
 	if err != nil {
 		fmt.Printf("Error resolving path: %v\n", err)
-		return "", "", err
+		return &DockerRunResponse{}, err
 	}
 	//executing docker
 	var exitCode int64
 	fmt.Println("ExitCode :", exitCode)
-	resp, err := e.dockerClient.ContainerCreate(ctx, client.ContainerCreateOptions{
+	//creates docker container
+	resp, err := e.dockerClient.ContainerCreate(dockerCtx, client.ContainerCreateOptions{
 		Config: &container.Config{
 			Image:      imageNames[language],
 			WorkingDir: "/workspace",
@@ -58,32 +68,37 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, s
 	})
 
 	if err != nil {
-		return "", "", err
+		return &DockerRunResponse{}, err
 	}
 	//container start
-	if _, err := e.dockerClient.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		return "", "", err
+	if _, err := e.dockerClient.ContainerStart(dockerCtx, resp.ID, client.ContainerStartOptions{}); err != nil {
+		return &DockerRunResponse{}, err
 	}
 	//container wait
-	wait := e.dockerClient.ContainerWait(ctx, resp.ID, client.ContainerWaitOptions{})
+	wait := e.dockerClient.ContainerWait(runCtx, resp.ID, client.ContainerWaitOptions{})
 	select {
 	case err := <-wait.Error:
+		//kill the container
 		if err != nil {
-			fmt.Println(err)
+			if runCtx.Err() == context.DeadlineExceeded {
+				_, _ = e.dockerClient.ContainerKill(dockerCtx, resp.ID, client.ContainerKillOptions{Signal: "SIGKILL"})
+			} else {
+				return nil, err
+			}
 		}
 	case res := <-wait.Result:
 		exitCode = res.StatusCode
 	}
 	//inspecting container
-	_, err = e.dockerClient.ContainerInspect(ctx, resp.ID, client.ContainerInspectOptions{})
+	inspect, err := e.dockerClient.ContainerInspect(dockerCtx, resp.ID, client.ContainerInspectOptions{})
 	if err != nil {
-		return "", "", err
+		return &DockerRunResponse{}, err
 	}
 	//logs
-	reader, err := e.dockerClient.ContainerLogs(ctx, resp.ID,
+	reader, err := e.dockerClient.ContainerLogs(dockerCtx, resp.ID,
 		client.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return "", "", err
+		return &DockerRunResponse{}, err
 	}
 	defer reader.Close()
 
@@ -93,7 +108,7 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, s
 
 	_, err = stdcopy.StdCopy(&stdout, &stderr, reader)
 	if err != nil {
-		return "", "", err
+		return &DockerRunResponse{}, err
 	}
 	//always remove container
 	defer e.dockerClient.ContainerRemove(
@@ -103,7 +118,22 @@ func (e *Executor) RunDocker(filePath string, language dtos.Language) (string, s
 			Force: true,
 		},
 	)
+	var status constants.Status
+	//determines appropriate status
+	if runCtx.Err() == context.DeadlineExceeded {
+		status = constants.StatusTLE
+	} else if inspect.Container.State.OOMKilled {
+		status = constants.StatusMLE
+	} else if inspect.Container.State.ExitCode != 0 {
+		status = constants.StatusRuntimeError
+	} else {
+		status = constants.StatusSuccess
+	}
 
-	return stdout.String(), stderr.String(), err
+	return &DockerRunResponse{
+		Stdout: stdout.String(),
+		Stderr: stderr.String(),
+		Status: status,
+	}, err
 
 }

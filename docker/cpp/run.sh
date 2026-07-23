@@ -6,7 +6,7 @@ g++ main.cpp -std=c++20 -O2 -o main
 
 START=$(date +%s%N)
 
-/usr/bin/time -f "%M" -o /tmp/memory.tmp ./main
+/usr/bin/time -q -f "%M" -o /tmp/memory.tmp ./main
 EXIT_CODE=$?
 
 END=$(date +%s%N)

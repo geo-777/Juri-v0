@@ -6,7 +6,7 @@ javac Main.java
 
 START=$(date +%s%N)
 
-/usr/bin/time -f "%M" -o /tmp/memory.tmp java Main
+/usr/bin/time -q -f "%M" -o /tmp/memory.tmp java Main
 EXIT_CODE=$?
 
 END=$(date +%s%N)

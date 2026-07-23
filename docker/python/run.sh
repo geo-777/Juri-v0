@@ -4,7 +4,7 @@ set +e
 
 START=$(date +%s%N)
 
-/usr/bin/time -f "%M" -o /tmp/memory.tmp python3 main.py
+/usr/bin/time -q -f "%M" -o /tmp/memory.tmp python3 main.py
 EXIT_CODE=$?
 
 END=$(date +%s%N)

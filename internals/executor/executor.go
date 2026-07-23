@@ -38,7 +38,6 @@ type ExecutionData struct {
 }
 
 func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn string) (ExecutionData, error) {
-	var executionData ExecutionData
 
 	//handles creation of workspace
 	filePath, err := CreateWorkspace(
@@ -53,31 +52,35 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 	//iniates cleanup on return
 	defer cleanupDir(filePath)
 	// Docker
-	stdout, stderr, err := e.RunDocker(filePath, language)
+	dockerResponse, err := e.RunDocker(filePath, language)
 
 	if err != nil {
 		erroredOutput := ExecutionData{
 			Metadata: ExecutionMetadata{ExitCode: 1},
-			Output:   stdout, Stderr: stderr,
-		}
-
-		if err.Error() == "time limit exceeded" {
-			erroredOutput.Status = constants.StatusTLE
+			Output:   dockerResponse.Stdout, Stderr: dockerResponse.Stderr,
+			Status: dockerResponse.Status,
 		}
 
 		return erroredOutput, nil
 	}
-	executionData.Output = stdout
 
-	//parsing output to fetch memory and time
-	metaData, err := getMetaData(filePath)
-
-	if err != nil {
-		return ExecutionData{}, err
+	//parsing output to fetch memory,time and exit code
+	metaData := ExecutionMetadata{}
+	if dockerResponse.Status != constants.StatusTLE {
+		metaData, err = getMetaData(filePath)
+		if err != nil {
+			return ExecutionData{}, err
+		}
+	} else {
+		metaData.ExitCode = 1 //for TLEs
 	}
-	executionData.Metadata = metaData
-	executionData.Status = constants.StatusSuccess
-	return executionData, nil
+
+	return ExecutionData{
+		Metadata: metaData,
+		Output:   dockerResponse.Stdout,
+		Stderr:   dockerResponse.Stderr,
+		Status:   dockerResponse.Status,
+	}, nil
 }
 
 // fetchees metaData.txt data from job dir
