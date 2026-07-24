@@ -2,21 +2,11 @@ package dtos
 
 import "code-runner/pkg/constants"
 
-// Language enums and type
-type Language string
-
-const (
-	CPP    Language = "cpp"
-	C      Language = "c"
-	Java   Language = "java"
-	Python Language = "python"
-)
-
 // request dto
 type RunRequestDto struct {
-	Language   Language `json:"language" binding:"required,oneof=cpp c java python"`
-	SourceCode string   `json:"source_code" binding:"required"`
-	Stdin      string   `json:"stdin"`
+	Language   constants.Language `json:"language" binding:"required,oneof=cpp c java python"`
+	SourceCode string             `json:"source_code" binding:"required"`
+	Stdin      string             `json:"stdin"`
 }
 
 // response dto

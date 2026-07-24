@@ -1,5 +1,15 @@
 package constants
 
+// Language enums and type
+type Language string
+
+const (
+	CPP    Language = "cpp"
+	C      Language = "c"
+	Java   Language = "java"
+	Python Language = "python"
+)
+
 // Status enums and type
 type Status string
 

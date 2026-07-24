@@ -2,14 +2,13 @@ package executor
 
 import (
 	"bytes"
-	"code-runner/internals/api/dtos"
 	"code-runner/pkg/constants"
+	"code-runner/pkg/utils"
 	"context"
 	"fmt"
 	"path/filepath"
 	"time"
 
-	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
@@ -22,20 +21,17 @@ type DockerRunResponse struct {
 }
 
 // map for image names
-var imageNames = map[dtos.Language]string{
-	dtos.C:      "juri/c",
-	dtos.CPP:    "juri/cpp",
-	dtos.Java:   "juri/java",
-	dtos.Python: "juri/python",
+var imageNames = map[constants.Language]string{
+	constants.C:      "juri/c",
+	constants.CPP:    "juri/cpp",
+	constants.Java:   "juri/java",
+	constants.Python: "juri/python",
 }
 
-func (e *Executor) RunDocker(filePath string, language dtos.Language, stdIn string) (*DockerRunResponse, error) {
+func (e *Executor) RunDocker(filePath string, language constants.Language, stdIn string) (*DockerRunResponse, error) {
 
 	//creating id for identify container
-	id, err := gonanoid.Generate("abcdefghijklmnopqrstuvwxyz0123456789", 10)
-	if err != nil {
-		id = "abhcbjh"
-	}
+	id := utils.GenerateNanoId(10)
 	//max time allowed for program is 3 second
 	dockerCtx := context.Background()
 

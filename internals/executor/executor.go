@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"code-runner/internals/api/dtos"
 	"code-runner/internals/config"
 	"code-runner/pkg/constants"
 	"log"
@@ -38,7 +37,7 @@ type ExecutionData struct {
 	Status   constants.Status
 }
 
-func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn string) (ExecutionData, error) {
+func (e *Executor) Execute(language constants.Language, sourceCode string, stdIn string) (ExecutionData, error) {
 
 	//handles creation of workspace
 	filePath, err := CreateWorkspace(

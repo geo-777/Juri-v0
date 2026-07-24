@@ -1,24 +1,18 @@
 package executor
 
 import (
-	"code-runner/internals/api/dtos"
+	"code-runner/pkg/constants"
+	"code-runner/pkg/utils"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 // responsible for creating the temporary file-folder system
-func CreateWorkspace(language dtos.Language, sourceCode string, root string) (string, error) {
+func CreateWorkspace(language constants.Language, sourceCode string, root string) (string, error) {
 	//generate job-id
-	id, err := gonanoid.Generate(
-		"abcdefghijklmnopqrstuvwxyz0123456789",
-		6,
-	)
-	if err != nil {
-		return "", err
-	}
+	id := utils.GenerateNanoId(6)
+
 	//prepare path
 	jobDir := filepath.Join(root, "job-"+id)
 	//creates necessary stuff
@@ -30,16 +24,16 @@ func CreateWorkspace(language dtos.Language, sourceCode string, root string) (st
 
 	switch language {
 
-	case dtos.C:
+	case constants.C:
 		filename = "main.c"
 
-	case dtos.CPP:
+	case constants.CPP:
 		filename = "main.cpp"
 
-	case dtos.Java:
+	case constants.Java:
 		filename = "Main.java"
 
-	case dtos.Python:
+	case constants.Python:
 		filename = "main.py"
 
 	default:
@@ -47,7 +41,7 @@ func CreateWorkspace(language dtos.Language, sourceCode string, root string) (st
 	}
 	//write the code into file
 	filePath := filepath.Join(jobDir, filename)
-	err = os.WriteFile(filePath, []byte(sourceCode), 0644)
+	err := os.WriteFile(filePath, []byte(sourceCode), 0644)
 
 	if err != nil {
 		return "", err
