@@ -53,7 +53,7 @@ func (e *Executor) Execute(language dtos.Language, sourceCode string, stdIn stri
 	//iniates cleanup on return
 	defer cleanupDir(filePath)
 	// Docker
-	dockerResponse, err := e.RunDocker(filePath, language)
+	dockerResponse, err := e.RunDocker(filePath, language, stdIn)
 
 	if err != nil {
 		erroredOutput := ExecutionData{

@@ -2,12 +2,13 @@ POST http://localhost:8000/run
 Content-Type: application/json
 
 
-{
-  "language": "python",
-  "source_code": "while True:\n\tpass"
-}
-
 # {
 #   "language": "python",
-#   "source_code": "i = 1\nwhile i <= 5:\n    print(f\"Hello World {i}\")\n    i += 1"
+#   "source_code": "while True:\n\tpass"
 # }
+
+{
+  "language": "python",
+  "source_code": "i = int(input())\nwhile i <= 5:\n    print(f\"Hello World {i}\")\n    i += 1",
+  "stdin" : "3"
+}
