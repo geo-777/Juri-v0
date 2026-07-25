@@ -1,6 +1,6 @@
 package dtos
 
-import "juri/pkg/constants"
+import "juri/internals/constants"
 
 // request dto
 type RunRequestDto struct {

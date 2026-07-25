@@ -2,8 +2,8 @@ package executor
 
 import (
 	"fmt"
-	"juri/pkg/constants"
-	"juri/pkg/utils"
+	"juri/internals/constants"
+	"juri/internals/utils"
 	"os"
 	"path/filepath"
 )
