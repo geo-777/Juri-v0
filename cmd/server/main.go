@@ -1,10 +1,10 @@
 package main
 
 import (
-	"code-runner/internals/api/handlers"
-	"code-runner/internals/config"
-	"code-runner/internals/executor"
-	"code-runner/internals/services"
+	"juri/internals/api/handlers"
+	"juri/internals/config"
+	"juri/internals/executor"
+	"juri/internals/services"
 	"log"
 	"net/http"
 

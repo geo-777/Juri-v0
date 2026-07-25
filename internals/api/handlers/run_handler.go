@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"code-runner/internals/api/dtos"
-	"code-runner/internals/services"
+	"juri/internals/api/dtos"
+	"juri/internals/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

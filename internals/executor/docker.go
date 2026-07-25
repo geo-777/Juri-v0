@@ -2,10 +2,10 @@ package executor
 
 import (
 	"bytes"
-	"code-runner/pkg/constants"
-	"code-runner/pkg/utils"
 	"context"
 	"fmt"
+	"juri/pkg/constants"
+	"juri/pkg/utils"
 	"path/filepath"
 	"time"
 

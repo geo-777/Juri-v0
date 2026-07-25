@@ -1,6 +1,6 @@
 package dtos
 
-import "code-runner/pkg/constants"
+import "juri/pkg/constants"
 
 // request dto
 type RunRequestDto struct {

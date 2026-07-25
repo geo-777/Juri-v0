@@ -1,9 +1,9 @@
 package executor
 
 import (
-	"code-runner/pkg/constants"
-	"code-runner/pkg/utils"
 	"fmt"
+	"juri/pkg/constants"
+	"juri/pkg/utils"
 	"os"
 	"path/filepath"
 )

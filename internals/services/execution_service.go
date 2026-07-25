@@ -1,8 +1,8 @@
 package services
 
 import (
-	"code-runner/internals/api/dtos"
-	"code-runner/internals/executor"
+	"juri/internals/api/dtos"
+	"juri/internals/executor"
 )
 
 type ExecutionService struct {

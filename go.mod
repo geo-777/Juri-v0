@@ -1,4 +1,4 @@
-module code-runner
+module juri
 
 go 1.25.11
 

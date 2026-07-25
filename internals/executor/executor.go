@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"code-runner/internals/config"
-	"code-runner/pkg/constants"
+	"juri/internals/config"
+	"juri/pkg/constants"
 	"log"
 	"os"
 	"path/filepath"
