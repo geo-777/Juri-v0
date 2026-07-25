@@ -2,6 +2,10 @@ package main
 
 import (
 	"juri/config"
+	"juri/internals/api/handlers"
+	"juri/internals/executor/compiler"
+	"juri/internals/executor/runner"
+	"juri/internals/services"
 	"log"
 	"net/http"
 
@@ -24,6 +28,14 @@ func main() {
 	}
 
 	// Dependency Injection
+	comp := compiler.NewDockerCompiler(cfg, dockerClient)
+	run := runner.NewDockerRunner(cfg, dockerClient)
+
+	runService := services.NewRunService(comp, run)
+	judgeService := services.NewJudgeService(comp, run)
+
+	runHandler := handlers.NewRunHandler(runService)
+	judgeHandler := handlers.NewJudgeHandler(judgeService)
 
 	// Router setup
 	router := gin.Default()
@@ -37,7 +49,8 @@ func main() {
 	})
 
 	// Routes
-	//router.POST("/run", runHandler.Run)
+	router.POST("/run", runHandler.Run)
+	router.POST("/judge", judgeHandler.Judge)
 
 	// Start Server
 	if err := router.Run(":" + cfg.Port); err != nil {
