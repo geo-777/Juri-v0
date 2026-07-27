@@ -11,6 +11,12 @@ type WorkspaceArtifact struct {
 	Cleanup func() error
 }
 
+type CompileResult struct {
+	Artifact *WorkspaceArtifact
+	Stderr   string
+	ExitCode int
+}
+
 type RunnerResponse struct {
 	Stdout string
 	Stderr string

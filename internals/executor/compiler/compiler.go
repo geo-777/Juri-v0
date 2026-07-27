@@ -9,5 +9,5 @@ import (
 )
 
 type Compiler interface {
-	Compile(ctx context.Context, language constants.Language, sourceCode string) (*executor.WorkspaceArtifact, error)
+	Compile(ctx context.Context, language constants.Language, sourceCode string) (*executor.CompileResult, error)
 }
