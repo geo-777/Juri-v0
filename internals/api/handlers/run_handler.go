@@ -20,16 +20,16 @@ func NewRunHandler(service *services.RunService) *RunHandler {
 
 func (h *RunHandler) Run(ctx *gin.Context) {
 
-	var req dtos.RunRequestDto
+	var reqBody dtos.RunRequestDto
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	response, err := h.service.Run()
+	response, err := h.service.Run(reqBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

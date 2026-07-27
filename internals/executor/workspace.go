@@ -49,11 +49,3 @@ func CreateWorkspace(language constants.Language, sourceCode string, root string
 	//returns file path if successful creation
 	return filePath, nil
 }
-
-func RemoveWorkspace(filePath string) error {
-	targetDir := filepath.Dir(filePath)
-
-	err := os.RemoveAll(targetDir)
-
-	return err
-}
