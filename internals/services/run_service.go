@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"juri/internals/api/dtos"
+	"juri/internals/constants"
 	"juri/internals/executor/compiler"
 	"juri/internals/executor/runner"
 	"time"
@@ -24,12 +25,20 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	//calling compiler service
 	//this returns an artifact with container ID and workspace path
 	compRes, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
-	fmt.Println(compRes.Stdout, compRes.ExitCode, compRes.Stderr)
-	//defer compRes.Artifact.Cleanup()
-
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Compile submission : %w", err)
 	}
+	if compRes.ExitCode != 0 {
+		return &dtos.RunResponseDto{
+			ExitCode: compRes.ExitCode,
+			Status:   constants.StatusCompilationError,
+			Stdout:   compRes.Stdout,
+			Stderr:   compRes.Stderr,
+		}, nil
+	}
+	defer compRes.Artifact.Cleanup()
+
+	//calling runner service
 
 	return &dtos.RunResponseDto{}, nil
 }

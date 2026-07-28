@@ -101,12 +101,12 @@ func (d *DockerCompiler) Compile(
 	}()
 	//starting container
 	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("start container: %w", err)
 	}
 	//compilation helper
 	compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compilation error: %w", err)
 	}
 
 	success = true
