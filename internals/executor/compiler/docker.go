@@ -27,6 +27,13 @@ func NewDockerCompiler(cfg *config.Config, docker *client.Client) Compiler {
 	return &DockerCompiler{cfg: cfg, docker: docker}
 }
 
+// helper responses
+type compileExecutionResult struct {
+	Stdout   string
+	Stderr   string
+	ExitCode int
+}
+
 func (d *DockerCompiler) Compile(
 	ctx context.Context,
 	language constants.Language,
@@ -96,7 +103,30 @@ func (d *DockerCompiler) Compile(
 	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		return nil, err
 	}
+	//compilation helper
+	compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
+	if err != nil {
+		return nil, err
+	}
 
+	success = true
+	//returning artifact with details as well as cleanup func
+	return &executor.CompileResult{
+		Artifact: &executor.ExecutionArtifact{
+			SourceFilePath: sourceFilePath,
+			SourceDirPath:  sourceDirPath,
+			ContainerID:    resp.ID,
+			Cleanup:        cleanup,
+		},
+		ExitCode: compResp.ExitCode,
+		Stderr:   compResp.Stderr,
+		Stdout:   compResp.Stdout,
+	}, nil
+}
+
+func (d *DockerCompiler) executeCompileCommand(
+	ctx context.Context, language constants.Language, containerID string,
+) (*compileExecutionResult, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	var exitCode int = 0
@@ -104,7 +134,7 @@ func (d *DockerCompiler) Compile(
 	cmd := languages.CompileCommands[language] //fetching cmd
 
 	if cmd != nil { // Interpreted languages (e.g. Python) have no compilation step.
-		execRes, err := d.docker.ExecCreate(ctx, resp.ID, client.ExecCreateOptions{
+		execRes, err := d.docker.ExecCreate(ctx, containerID, client.ExecCreateOptions{
 			Cmd: cmd, AttachStdout: true, AttachStderr: true, TTY: false,
 		})
 		if err != nil {
@@ -141,17 +171,10 @@ func (d *DockerCompiler) Compile(
 		}
 
 	}
-	success = true
-	//returning artifact with details as well as cleanup func
-	return &executor.CompileResult{
-		Artifact: &executor.ExecutionArtifact{
-			SourceFilePath: sourceFilePath,
-			SourceDirPath:  sourceDirPath,
-			ContainerID:    resp.ID,
-			Cleanup:        cleanup,
-		},
+
+	return &compileExecutionResult{
 		ExitCode: exitCode,
-		Stderr:   stderr.String(),
 		Stdout:   stdout.String(),
+		Stderr:   stderr.String(),
 	}, nil
 }
