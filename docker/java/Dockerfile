@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17-jdk-jammy
 
 # Create unprivileged user
-RUN useradd -m -u 1001 -s /bin/bash runner
+RUN useradd -m -u 1000 -s /bin/bash runner
 
 # Install /usr/bin/time
 RUN apt-get update \

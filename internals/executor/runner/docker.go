@@ -17,7 +17,7 @@ func NewDockerRunner(cfg *config.Config, docker *client.Client) Runner {
 }
 
 func (d *DockerRunner) Run(
-	wsArtifact *executor.WorkspaceArtifact,
+	wsArtifact *executor.ExecutionArtifact,
 	stdin string) (*executor.RunnerResponse, error) {
 
 	return nil, nil

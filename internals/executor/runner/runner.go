@@ -6,5 +6,5 @@ package runner
 import "juri/internals/executor"
 
 type Runner interface {
-	Run(wsArtifact *executor.WorkspaceArtifact, stdin string) (*executor.RunnerResponse, error)
+	Run(wsArtifact *executor.ExecutionArtifact, stdin string) (*executor.RunnerResponse, error)
 }

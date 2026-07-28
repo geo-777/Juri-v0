@@ -2,7 +2,7 @@ package executor
 
 import "juri/internals/constants"
 
-type WorkspaceArtifact struct {
+type ExecutionArtifact struct {
 	ContainerID    string
 	ContainerName  string
 	SourceFilePath string
@@ -12,8 +12,9 @@ type WorkspaceArtifact struct {
 }
 
 type CompileResult struct {
-	Artifact *WorkspaceArtifact
+	Artifact *ExecutionArtifact
 	Stderr   string
+	Stdout   string
 	ExitCode int
 }
 

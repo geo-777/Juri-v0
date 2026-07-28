@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"juri/internals/api/dtos"
 	"juri/internals/executor/compiler"
 	"juri/internals/executor/runner"
@@ -22,7 +23,8 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	defer cancel()
 	//calling compiler service
 	//this returns an artifact with container ID and workspace path
-	_, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
+	compRes, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
+	fmt.Println(compRes.Stdout, compRes.ExitCode, compRes.Stderr)
 	//defer compRes.Artifact.Cleanup()
 
 	if err != nil {

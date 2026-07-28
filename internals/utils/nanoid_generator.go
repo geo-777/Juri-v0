@@ -16,12 +16,10 @@ func GenerateNanoId(length int) string {
 	}
 
 	// Fallback to a random hex string in case nanoid fails
-	buf := make([]byte, (length+1)/2)
-	_, _ = rand.Read(buf)
-	s := hex.EncodeToString(buf)
+	buffer := make([]byte, (length+1)/2)
+	_, _ = rand.Read(buffer)
+	s := hex.EncodeToString(buffer)
+	s = s[:length]
 
-	if len(s) > length {
-		s = s[:length]
-	}
 	return s
 }

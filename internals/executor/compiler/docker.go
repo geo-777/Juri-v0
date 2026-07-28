@@ -3,11 +3,11 @@ package compiler
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
 	"juri/internals/executor/languages"
-	"juri/internals/utils"
 	"log"
 	"os"
 	"path/filepath"
@@ -32,9 +32,6 @@ func (d *DockerCompiler) Compile(
 	language constants.Language,
 	sourceCode string,
 ) (*executor.CompileResult, error) {
-	//generating container name
-	containerName := utils.GenerateNanoId(10)
-
 	//creating workspace
 	sourceFilePath, err := executor.CreateWorkspace(language, sourceCode, d.cfg.WorkspaceRoot)
 	if err != nil {
@@ -44,6 +41,7 @@ func (d *DockerCompiler) Compile(
 	if err != nil {
 		return nil, err
 	}
+	pidLimit := int64(128)
 
 	//creating container
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
@@ -57,16 +55,17 @@ func (d *DockerCompiler) Compile(
 		HostConfig: &container.HostConfig{
 			NetworkMode: "none",
 			Resources: container.Resources{
-				Memory:   128 * 1024 * 1024, //128MB
-				NanoCPUs: 1_000_000_000,     //1 CPU
+				Memory:    128 * 1024 * 1024, //128MB
+				NanoCPUs:  1_000_000_000,     //1 CPU
+				PidsLimit: &pidLimit,         // takes only pointer to int64
 			},
+
 			Binds: []string{sourceDirPath + ":/workspace"},
 		},
-		Name: containerName,
 	})
 	if err != nil {
 		_ = os.RemoveAll(sourceDirPath) //cleaning ws
-		return nil, err
+		return nil, fmt.Errorf("create container: %w", err)
 	}
 	//cleanup function
 	cleanup := func() error {
@@ -88,7 +87,9 @@ func (d *DockerCompiler) Compile(
 	success := false
 	defer func() {
 		if !success {
-			cleanup()
+			if err := cleanup(); err != nil {
+				log.Printf("cleanup failed: %v", err)
+			}
 		}
 	}()
 	//starting container
@@ -101,7 +102,8 @@ func (d *DockerCompiler) Compile(
 	var exitCode int = 0
 	//compilation
 	cmd := languages.CompileCommands[language] //fetching cmd
-	if cmd != nil {
+
+	if cmd != nil { // Interpreted languages (e.g. Python) have no compilation step.
 		execRes, err := d.docker.ExecCreate(ctx, resp.ID, client.ExecCreateOptions{
 			Cmd: cmd, AttachStdout: true, AttachStderr: true, TTY: false,
 		})
@@ -109,7 +111,11 @@ func (d *DockerCompiler) Compile(
 			return nil, err
 		}
 		//attatching to exec
-		attachResp, _ := d.docker.ExecAttach(ctx, execRes.ID, client.ExecAttachOptions{})
+		attachResp, err := d.docker.ExecAttach(ctx, execRes.ID, client.ExecAttachOptions{})
+		if err != nil {
+			return nil, err
+		}
+
 		defer attachResp.Close()
 		//runnning exec
 		if _, err := d.docker.ExecStart(ctx, execRes.ID, client.ExecStartOptions{}); err != nil {
@@ -131,21 +137,21 @@ func (d *DockerCompiler) Compile(
 				}
 				break
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 
 	}
 	success = true
 	//returning artifact with details as well as cleanup func
 	return &executor.CompileResult{
-		Artifact: &executor.WorkspaceArtifact{
+		Artifact: &executor.ExecutionArtifact{
 			SourceFilePath: sourceFilePath,
 			SourceDirPath:  sourceDirPath,
-			ContainerName:  containerName,
 			ContainerID:    resp.ID,
 			Cleanup:        cleanup,
 		},
 		ExitCode: exitCode,
 		Stderr:   stderr.String(),
+		Stdout:   stdout.String(),
 	}, nil
 }

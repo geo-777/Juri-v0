@@ -1,7 +1,7 @@
 FROM gcc:14
 
 # Create unprivileged user
-RUN useradd -m -u 1001 -s /bin/bash runner
+RUN useradd -m -u 1000 -s /bin/bash runner
 
 # Install /usr/bin/time
 RUN apt-get update \
