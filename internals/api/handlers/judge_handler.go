@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"juri/internals/api/dtos"
 	"juri/internals/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,5 +21,21 @@ func NewJudgeHandler(service *services.JudgeService) *JudgeHandler {
 
 // Judge handles judge requests for a submission.
 func (h *JudgeHandler) Judge(ctx *gin.Context) {
-	// TODO: implement the judge flow.
+	//binding and defining request body
+	var reqBody dtos.JudgeRequestDto
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	response, err := h.service.Judge(reqBody)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "internal server error",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, response)
 }

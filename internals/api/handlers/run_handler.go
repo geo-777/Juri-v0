@@ -3,8 +3,6 @@ package handlers
 import (
 	"juri/internals/api/dtos"
 	"juri/internals/services"
-	"juri/internals/utils"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,14 +30,11 @@ func (h *RunHandler) Run(ctx *gin.Context) {
 		return
 	}
 
-	// Delegate the request to the domain service and return the result.
+	// Send the request to the domain service and return the result.
 	response, err := h.service.Run(reqBody)
 	if err != nil {
-		requestID := utils.GenerateNanoId(10)
-		log.Printf("request_id=%s endpoint=/run error=%v", requestID, err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error":      "internal server error",
-			"request_id": requestID,
+			"error": "internal server error",
 		})
 		return
 	}
