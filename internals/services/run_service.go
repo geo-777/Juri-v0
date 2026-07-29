@@ -39,6 +39,13 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	defer compRes.Artifact.Cleanup()
 
 	//calling runner service
-
-	return &dtos.RunResponseDto{}, nil
+	runResp, err := s.runner.Run(runCtx, compRes.Artifact, dto.Stdin, dto.Language)
+	if err != nil {
+		return nil, fmt.Errorf("Run submission : %w", err)
+	}
+	return &dtos.RunResponseDto{
+		Stdout:   runResp.Stdout,
+		Stderr:   runResp.Stderr,
+		ExitCode: runResp.ExitCode,
+	}, nil
 }
