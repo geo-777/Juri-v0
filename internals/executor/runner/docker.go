@@ -9,6 +9,7 @@ import (
 	"juri/internals/constants"
 	"juri/internals/executor"
 	"juri/internals/executor/languages"
+	"log"
 	"time"
 
 	"github.com/moby/moby/api/pkg/stdcopy"
@@ -29,9 +30,10 @@ func (d *DockerRunner) Run(
 	wsArtifact *executor.ExecutionArtifact,
 	stdin string,
 	language constants.Language) (*executor.RunnerResponse, error) {
-	var exitCode int = 0 //bydefault
+	var exitCode int
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
+	var status constants.Status
 
 	//fetching run cmd from map
 	runCmd := languages.RunCommands[language]
@@ -59,31 +61,60 @@ func (d *DockerRunner) Run(
 	//passing input via goroutine
 	go func() {
 		defer attachResp.CloseWrite()
-		io.WriteString(attachResp.Conn, stdin)
+		if _, err := io.WriteString(attachResp.Conn, stdin); err != nil {
+			log.Printf("Attatching input error : %v", err)
+		}
+	}()
+	copyDone := make(chan error, 1)
+
+	go func() {
+		_, err := stdcopy.StdCopy(&stdout, &stderr, attachResp.Reader)
+		copyDone <- err
 	}()
 
 	for {
+		select {
+		case <-ctx.Done():
+			_, _ = d.docker.ContainerKill(context.Background(), wsArtifact.ContainerID, client.ContainerKillOptions{Signal: "SIGKILL"})
+			<-copyDone // let StdCopy finish
+			return nil, ctx.Err()
+
+		default:
+		}
+
 		inspect, err := d.docker.ExecInspect(ctx, execRes.ID, client.ExecInspectOptions{})
 		if err != nil {
 			return nil, err
 		}
-
 		if !inspect.Running {
 			exitCode = inspect.ExitCode
-			fmt.Println("Exit Code:", inspect.ExitCode)
-			_, err = stdcopy.StdCopy(&stdout, &stderr, attachResp.Reader)
-			if err != nil {
-				return nil, err
-			}
 			break
 		}
 
 		time.Sleep(50 * time.Millisecond)
+	}
+	//waiting for shit
+	if err := <-copyDone; err != nil {
+		return nil, err
+	}
+	//inspecting container for oom status
+	inspect, err := d.docker.ContainerInspect(ctx, wsArtifact.ContainerID, client.ContainerInspectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if inspect.Container.State.OOMKilled {
+		status = constants.StatusMLE
+	} else if exitCode != 0 {
+		status = constants.StatusRuntimeError
+	} else {
+		status = constants.StatusSuccess
 	}
 
 	return &executor.RunnerResponse{
 		ExitCode: exitCode,
 		Stdout:   stdout.String(),
 		Stderr:   stderr.String(),
+		Status:   status,
 	}, nil
 }

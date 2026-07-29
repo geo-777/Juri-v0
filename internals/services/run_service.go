@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"juri/internals/api/dtos"
 	"juri/internals/constants"
@@ -41,11 +42,16 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	//calling runner service
 	runResp, err := s.runner.Run(runCtx, compRes.Artifact, dto.Stdin, dto.Language)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+
+			return &dtos.RunResponseDto{Status: constants.StatusTLE}, nil
+		}
 		return nil, fmt.Errorf("Run submission : %w", err)
 	}
 	return &dtos.RunResponseDto{
 		Stdout:   runResp.Stdout,
 		Stderr:   runResp.Stderr,
 		ExitCode: runResp.ExitCode,
+		Status:   runResp.Status,
 	}, nil
 }
