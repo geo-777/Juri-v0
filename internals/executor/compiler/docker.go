@@ -26,12 +26,13 @@ func NewDockerCompiler(cfg *config.Config, docker *client.Client) Compiler {
 	return &DockerCompiler{cfg: cfg, docker: docker}
 }
 
+// Compile creates a temporary workspace, starts a container, and runs the compile step.
 func (d *DockerCompiler) Compile(
 	ctx context.Context,
 	language constants.Language,
 	sourceCode string,
 ) (*executor.CompileResult, error) {
-	//creating workspace
+	// Create a temporary workspace for the submitted source file.
 	sourceFilePath, err := executor.CreateWorkspace(language, sourceCode, d.cfg.WorkspaceRoot)
 	if err != nil {
 		return nil, fmt.Errorf("create workspace: %w", err)
@@ -43,7 +44,7 @@ func (d *DockerCompiler) Compile(
 	}
 	pidLimit := int64(128)
 
-	//creating container
+	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config: &container.Config{
 			Image:       languages.ImageNames[language],
@@ -67,7 +68,7 @@ func (d *DockerCompiler) Compile(
 		_ = os.RemoveAll(sourceDirPath) //cleaning ws
 		return nil, fmt.Errorf("docker container create: %w", err)
 	}
-	//cleanup function
+	// Define a cleanup routine for the container and workspace on failure or teardown.
 	cleanup := func() error {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -92,18 +93,18 @@ func (d *DockerCompiler) Compile(
 			}
 		}
 	}()
-	//starting container
+	// Start the container so the compile command can run.
 	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		return nil, fmt.Errorf("docker container start: %w", err)
 	}
-	//compilation helper
+	// Run the language-specific compilation command inside the container.
 	compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
 	if err != nil {
 		return nil, fmt.Errorf("compile command: %w", err)
 	}
 
 	success = true
-	//returning artifact with details as well as cleanup func
+	// Return the execution artifact and compile output.
 	return &executor.CompileResult{
 		Artifact: &executor.ExecutionArtifact{
 			SourceFilePath: sourceFilePath,

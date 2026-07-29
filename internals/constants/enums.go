@@ -1,6 +1,6 @@
 package constants
 
-// Language enums and type
+// Language represents the supported submission languages.
 type Language string
 
 const (
@@ -10,7 +10,7 @@ const (
 	Python Language = "python"
 )
 
-// Status enums and type
+// Status describes the outcome of a submission run.
 type Status string
 
 const (

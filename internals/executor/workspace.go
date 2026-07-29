@@ -8,14 +8,14 @@ import (
 	"path/filepath"
 )
 
-// responsible for creating the temporary file-folder system
+// CreateWorkspace prepares a temporary job directory and writes the submission source file into it.
 func CreateWorkspace(language constants.Language, sourceCode string, root string) (string, error) {
-	//generate job-id
+	// Generate a short unique ID for the job folder.
 	id := utils.GenerateNanoId(6)
 
-	//prepare path
+	// Build the workspace path for this submission.
 	jobDir := filepath.Join(root, "job-"+id)
-	//creates necessary stuff
+	// Create the directory structure needed for the job.
 	if err := os.MkdirAll(jobDir, 0777); err != nil {
 		return "", fmt.Errorf("create job directory: %w", err)
 	}
@@ -40,7 +40,7 @@ func CreateWorkspace(language constants.Language, sourceCode string, root string
 		_ = os.RemoveAll(jobDir)
 		return "", fmt.Errorf("unsupported language %q", language)
 	}
-	//write the code into file
+	// Write the source code into the job directory.
 	filePath := filepath.Join(jobDir, filename)
 	err := os.WriteFile(filePath, []byte(sourceCode), 0644)
 
@@ -48,6 +48,6 @@ func CreateWorkspace(language constants.Language, sourceCode string, root string
 		_ = os.RemoveAll(jobDir)
 		return "", fmt.Errorf("write source file: %w", err)
 	}
-	//returns file path if successful creation
+	// Return the source file path when the workspace is ready.
 	return filePath, nil
 }

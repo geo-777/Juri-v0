@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RunHandler receives HTTP requests for submission execution and delegates them to the service layer.
 type RunHandler struct {
 	service *services.RunService
 }
@@ -21,7 +22,7 @@ func NewRunHandler(service *services.RunService) *RunHandler {
 }
 
 func (h *RunHandler) Run(ctx *gin.Context) {
-
+	// Parse and validate the incoming JSON payload.
 	var reqBody dtos.RunRequestDto
 
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
@@ -31,6 +32,7 @@ func (h *RunHandler) Run(ctx *gin.Context) {
 		return
 	}
 
+	// Delegate the request to the domain service and return the result.
 	response, err := h.service.Run(reqBody)
 	if err != nil {
 		requestID := utils.GenerateNanoId(10)

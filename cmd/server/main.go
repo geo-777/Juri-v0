@@ -14,20 +14,20 @@ import (
 )
 
 func main() {
-	//init docker client
+	// Initialize the Docker client used by the execution backends.
 	dockerClient, err := client.New(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}
 	defer dockerClient.Close()
 
-	// Load configuration
+	// Load runtime settings from the environment.
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal("failed to load configuration:", err)
 	}
 
-	// Dependency Injection
+	// Wire the compiler, runner, and service layers together.
 	comp := compiler.NewDockerCompiler(cfg, dockerClient)
 	run := runner.NewDockerRunner(cfg, dockerClient)
 
@@ -37,22 +37,22 @@ func main() {
 	runHandler := handlers.NewRunHandler(runService)
 	judgeHandler := handlers.NewJudgeHandler(judgeService)
 
-	// Router setup
+	// Configure the Gin router and register the public endpoints.
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
 
-	// Health Check
+	// Expose a basic health endpoint for readiness checks.
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"health": "ok",
 		})
 	})
 
-	// Routes
+	// Register the submission and judging routes.
 	router.POST("/run", runHandler.Run)
 	router.POST("/judge", judgeHandler.Judge)
 
-	// Start Server
+	// Start the HTTP server.
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal(err)
 	}

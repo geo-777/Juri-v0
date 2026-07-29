@@ -2,14 +2,14 @@ package dtos
 
 import "juri/internals/constants"
 
-// request dto
+// RunRequestDto captures the input payload for a compile-and-run request.
 type RunRequestDto struct {
 	Language   constants.Language `json:"language" binding:"required,oneof=cpp c java python"`
 	SourceCode string             `json:"source_code" binding:"required"`
 	Stdin      string             `json:"stdin"`
 }
 
-// response dto
+// RunResponseDto carries the outcome of a submission execution.
 type RunResponseDto struct {
 	Status          constants.Status `json:"status"`
 	Stdout          string           `json:"stdout"`

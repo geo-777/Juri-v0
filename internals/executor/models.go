@@ -2,6 +2,7 @@ package executor
 
 import "juri/internals/constants"
 
+// ExecutionArtifact describes the temporary execution workspace created for a submission.
 type ExecutionArtifact struct {
 	ContainerID    string
 	ContainerName  string
@@ -11,6 +12,7 @@ type ExecutionArtifact struct {
 	Cleanup func() error
 }
 
+// CompileResult stores the output of a compilation step.
 type CompileResult struct {
 	Artifact *ExecutionArtifact
 	Stderr   string
@@ -18,6 +20,7 @@ type CompileResult struct {
 	ExitCode int
 }
 
+// RunnerResponse stores the result of a runtime execution.
 type RunnerResponse struct {
 	Stdout string
 	Stderr string

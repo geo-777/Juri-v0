@@ -2,6 +2,7 @@ package languages
 
 import "juri/internals/constants"
 
+// CompileCommands maps each supported language to the command used for compilation.
 var CompileCommands = map[constants.Language][]string{
 	constants.C: {
 		"gcc",

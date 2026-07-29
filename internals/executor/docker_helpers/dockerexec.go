@@ -13,12 +13,14 @@ import (
 
 const pollInterval = 50 * time.Millisecond
 
+// Request describes the command to run inside an existing container.
 type Request struct {
 	ContainerID string
 	Command     []string
 	Stdin       string
 }
 
+// Result stores the captured output and exit status of a container command.
 type Result struct {
 	Stdout   string
 	Stderr   string
@@ -34,6 +36,7 @@ func Execute(ctx context.Context, docker *client.Client, request Request) (*Resu
 		return nil, fmt.Errorf("docker exec create: %w", err)
 	}
 
+	// Attach to the exec session so stdin, stdout, and stderr can be streamed.
 	attachResponse, err := docker.ExecAttach(ctx, execResult.ID, client.ExecAttachOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("docker exec attach: %w", err)
@@ -44,6 +47,7 @@ func Execute(ctx context.Context, docker *client.Client, request Request) (*Resu
 		return nil, fmt.Errorf("docker exec start: %w", err)
 	}
 
+	// Forward stdin to the process when the caller provides it.
 	if request.Stdin != "" {
 		go func() {
 			defer attachResponse.CloseWrite()
@@ -51,6 +55,7 @@ func Execute(ctx context.Context, docker *client.Client, request Request) (*Resu
 		}()
 	}
 
+	// Capture stdout and stderr separately while the command runs.
 	var stdout, stderr bytes.Buffer
 	copyDone := make(chan error, 1)
 	go func() {
@@ -58,6 +63,7 @@ func Execute(ctx context.Context, docker *client.Client, request Request) (*Resu
 		copyDone <- err
 	}()
 
+	// Wait until the exec process exits and then return its final status.
 	exitCode, err := waitForCompletion(ctx, docker, execResult.ID)
 	if err != nil {
 		return nil, err

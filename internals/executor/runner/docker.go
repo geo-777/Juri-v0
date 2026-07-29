@@ -21,12 +21,13 @@ func NewDockerRunner(cfg *config.Config, docker *client.Client) Runner {
 	return &DockerRunner{cfg: cfg, docker: docker}
 }
 
+// Run executes a compiled submission inside the prepared container.
 func (d *DockerRunner) Run(
 	ctx context.Context,
 	wsArtifact *executor.ExecutionArtifact,
 	stdin string,
 	language constants.Language) (*executor.RunnerResponse, error) {
-	
+
 	runResult, err := docker_helpers.Execute(ctx, d.docker, docker_helpers.Request{
 		ContainerID: wsArtifact.ContainerID,
 		Command:     languages.RunCommands[language],
@@ -39,7 +40,7 @@ func (d *DockerRunner) Run(
 		}
 		return nil, fmt.Errorf("run command: %w", err)
 	}
-	//inspecting container for oom status
+	// Inspect the container state to detect OOM or other runtime issues.
 	inspect, err := d.docker.ContainerInspect(ctx, wsArtifact.ContainerID, client.ContainerInspectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("docker container inspect: %w", err)

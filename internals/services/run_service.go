@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// RunService coordinates compilation and execution for a single submission.
 type RunService struct {
 	compiler compiler.Compiler
 	runner   runner.Runner
@@ -21,11 +22,12 @@ func NewRunService(c compiler.Compiler, r runner.Runner) *RunService {
 	return &RunService{compiler: c, runner: r}
 }
 
+// Run compiles a submission, executes it, and returns the observed result.
 func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
+	// Use a short timeout to prevent runaway code from blocking the service indefinitely.
 	runCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	//calling compiler service
-	//this returns an artifact with container ID and workspace path
+	// Compile the submission into an executable artifact.
 	compRes, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
 	if err != nil {
 		return nil, fmt.Errorf("run service compile submission: %w", err)
@@ -43,7 +45,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 			Stderr:   compRes.Stderr,
 		}, nil
 	}
-	//calling runner service
+	// Execute the compiled artifact with the provided stdin.
 	runResp, err := s.runner.Run(runCtx, compRes.Artifact, dto.Stdin, dto.Language)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {

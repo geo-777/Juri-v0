@@ -9,13 +9,14 @@ import (
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 
+// GenerateNanoId creates a short random identifier for request tracking and job naming.
 func GenerateNanoId(length int) string {
 	id, err := gonanoid.Generate(alphabet, length)
 	if err == nil {
 		return id
 	}
 
-	// Fallback to a random hex string in case nanoid fails
+	// Fall back to a random hex string if the primary generator fails.
 	buffer := make([]byte, (length+1)/2)
 	_, _ = rand.Read(buffer)
 	s := hex.EncodeToString(buffer)
