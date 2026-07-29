@@ -17,7 +17,7 @@ func CreateWorkspace(language constants.Language, sourceCode string, root string
 	jobDir := filepath.Join(root, "job-"+id)
 	//creates necessary stuff
 	if err := os.MkdirAll(jobDir, 0777); err != nil {
-		return "", err
+		return "", fmt.Errorf("create job directory: %w", err)
 	}
 
 	var filename string
@@ -37,14 +37,16 @@ func CreateWorkspace(language constants.Language, sourceCode string, root string
 		filename = "main.py"
 
 	default:
-		return "", fmt.Errorf("unsupported language")
+		_ = os.RemoveAll(jobDir)
+		return "", fmt.Errorf("unsupported language %q", language)
 	}
 	//write the code into file
 	filePath := filepath.Join(jobDir, filename)
 	err := os.WriteFile(filePath, []byte(sourceCode), 0644)
 
 	if err != nil {
-		return "", err
+		_ = os.RemoveAll(jobDir)
+		return "", fmt.Errorf("write source file: %w", err)
 	}
 	//returns file path if successful creation
 	return filePath, nil

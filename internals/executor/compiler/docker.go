@@ -1,19 +1,18 @@
 package compiler
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
+	"juri/internals/executor/docker_helpers"
 	"juri/internals/executor/languages"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 )
@@ -27,13 +26,6 @@ func NewDockerCompiler(cfg *config.Config, docker *client.Client) Compiler {
 	return &DockerCompiler{cfg: cfg, docker: docker}
 }
 
-// helper responses
-type compileExecutionResult struct {
-	Stdout   string
-	Stderr   string
-	ExitCode int
-}
-
 func (d *DockerCompiler) Compile(
 	ctx context.Context,
 	language constants.Language,
@@ -42,11 +34,12 @@ func (d *DockerCompiler) Compile(
 	//creating workspace
 	sourceFilePath, err := executor.CreateWorkspace(language, sourceCode, d.cfg.WorkspaceRoot)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create workspace: %w", err)
 	}
 	sourceDirPath, err := filepath.Abs(filepath.Dir(sourceFilePath))
 	if err != nil {
-		return nil, err
+		_ = os.RemoveAll(filepath.Dir(sourceFilePath))
+		return nil, fmt.Errorf("resolve workspace path: %w", err)
 	}
 	pidLimit := int64(128)
 
@@ -72,7 +65,7 @@ func (d *DockerCompiler) Compile(
 	})
 	if err != nil {
 		_ = os.RemoveAll(sourceDirPath) //cleaning ws
-		return nil, fmt.Errorf("create container: %w", err)
+		return nil, fmt.Errorf("docker container create: %w", err)
 	}
 	//cleanup function
 	cleanup := func() error {
@@ -85,7 +78,7 @@ func (d *DockerCompiler) Compile(
 		}
 		//removing workspace
 		if err := os.RemoveAll(sourceDirPath); err != nil {
-			log.Printf("Failed to remove workspace : %v", err)
+			log.Printf("cleanup workspace: %v", err)
 			return err
 		}
 		return nil
@@ -101,12 +94,12 @@ func (d *DockerCompiler) Compile(
 	}()
 	//starting container
 	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		return nil, fmt.Errorf("start container: %w", err)
+		return nil, fmt.Errorf("docker container start: %w", err)
 	}
 	//compilation helper
 	compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
 	if err != nil {
-		return nil, fmt.Errorf("compilation error: %w", err)
+		return nil, fmt.Errorf("compile command: %w", err)
 	}
 
 	success = true
@@ -126,55 +119,14 @@ func (d *DockerCompiler) Compile(
 
 func (d *DockerCompiler) executeCompileCommand(
 	ctx context.Context, language constants.Language, containerID string,
-) (*compileExecutionResult, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	var exitCode int = 0
-	//compilation
-	cmd := languages.CompileCommands[language] //fetching cmd
-
-	if cmd != nil { // Interpreted languages (e.g. Python) have no compilation step.
-		execRes, err := d.docker.ExecCreate(ctx, containerID, client.ExecCreateOptions{
-			Cmd: cmd, AttachStdout: true, AttachStderr: true, TTY: false,
-		})
-		if err != nil {
-			return nil, err
-		}
-		//attatching to exec
-		attachResp, err := d.docker.ExecAttach(ctx, execRes.ID, client.ExecAttachOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		defer attachResp.Close()
-		//runnning exec
-		if _, err := d.docker.ExecStart(ctx, execRes.ID, client.ExecStartOptions{}); err != nil {
-			return nil, err
-		}
-
-		//polling to get compilation status
-		for {
-			inspect, err := d.docker.ExecInspect(ctx, execRes.ID, client.ExecInspectOptions{})
-			if err != nil {
-				return nil, err
-			}
-			//if not running
-			if !inspect.Running {
-				exitCode = inspect.ExitCode
-				_, err = stdcopy.StdCopy(&stdout, &stderr, attachResp.Reader)
-				if err != nil {
-					return nil, err
-				}
-				break
-			}
-			time.Sleep(50 * time.Millisecond)
-		}
-
+) (*docker_helpers.Result, error) {
+	command := languages.CompileCommands[language]
+	if command == nil { // Interpreted languages have no compilation step.
+		return &docker_helpers.Result{}, nil
 	}
 
-	return &compileExecutionResult{
-		ExitCode: exitCode,
-		Stdout:   stdout.String(),
-		Stderr:   stderr.String(),
-	}, nil
+	return docker_helpers.Execute(ctx, d.docker, docker_helpers.Request{
+		ContainerID: containerID,
+		Command:     command,
+	})
 }

@@ -8,6 +8,7 @@ import (
 	"juri/internals/constants"
 	"juri/internals/executor/compiler"
 	"juri/internals/executor/runner"
+	"log"
 	"time"
 )
 
@@ -27,8 +28,13 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	//this returns an artifact with container ID and workspace path
 	compRes, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
 	if err != nil {
-		return nil, fmt.Errorf("Compile submission : %w", err)
+		return nil, fmt.Errorf("run service compile submission: %w", err)
 	}
+	defer func() {
+		if err := compRes.Artifact.Cleanup(); err != nil {
+			log.Printf("run service cleanup artifact: %v", err)
+		}
+	}()
 	if compRes.ExitCode != 0 {
 		return &dtos.RunResponseDto{
 			ExitCode: compRes.ExitCode,
@@ -37,8 +43,6 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 			Stderr:   compRes.Stderr,
 		}, nil
 	}
-	defer compRes.Artifact.Cleanup()
-
 	//calling runner service
 	runResp, err := s.runner.Run(runCtx, compRes.Artifact, dto.Stdin, dto.Language)
 	if err != nil {
@@ -46,7 +50,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 
 			return &dtos.RunResponseDto{Status: constants.StatusTLE}, nil
 		}
-		return nil, fmt.Errorf("Run submission : %w", err)
+		return nil, fmt.Errorf("run service execute submission: %w", err)
 	}
 	return &dtos.RunResponseDto{
 		Stdout:   runResp.Stdout,
