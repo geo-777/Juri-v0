@@ -9,7 +9,7 @@ The original judge executed one Docker Exec operation per testcase.
 For approximately 200 testcases this introduced around 20 seconds of overhead,
 despite user programs requiring only milliseconds.
 
-Profiling identified Docker Exec startup as the dominant cost.
+Profiling identified Docker Exec as the dominant cost.
 
 ## Decision
 

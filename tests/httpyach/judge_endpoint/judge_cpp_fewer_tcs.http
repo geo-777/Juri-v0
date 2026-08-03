@@ -1,0 +1,317 @@
+POST http://localhost:8000/judge
+Content-Type: application/json
+
+{
+  "language": "cpp",
+  "source_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n\n    int rev = 0;\n    while (n > 0) {\n        rev = rev * 10 + (n % 10);\n        n /= 10;\n    }\n\n    cout << rev << endl;\n    return 0;\n}",
+  "test_cases": [
+  {
+    "input": "0",
+    "expected_output": "0\n"
+  },
+  {
+    "input": "1",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "7",
+    "expected_output": "7\n"
+  },
+  {
+    "input": "9",
+    "expected_output": "9\n"
+  },
+  {
+    "input": "10",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "11",
+    "expected_output": "11\n"
+  },
+  {
+    "input": "12",
+    "expected_output": "21\n"
+  },
+  {
+    "input": "20",
+    "expected_output": "2\n"
+  },
+  {
+    "input": "21",
+    "expected_output": "12\n"
+  },
+  {
+    "input": "99",
+    "expected_output": "99\n"
+  },
+  {
+    "input": "100",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "101",
+    "expected_output": "101\n"
+  },
+  {
+    "input": "110",
+    "expected_output": "11\n"
+  },
+  {
+    "input": "121",
+    "expected_output": "121\n"
+  },
+  {
+    "input": "123",
+    "expected_output": "321\n"
+  },
+  {
+    "input": "1000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "1001",
+    "expected_output": "1001\n"
+  },
+  {
+    "input": "1010",
+    "expected_output": "101\n"
+  },
+  {
+    "input": "1111",
+    "expected_output": "1111\n"
+  },
+  {
+    "input": "1234",
+    "expected_output": "4321\n"
+  },
+  {
+    "input": "10000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "12345",
+    "expected_output": "54321\n"
+  },
+  {
+    "input": "54321",
+    "expected_output": "12345\n"
+  },
+  {
+    "input": "100000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "123456",
+    "expected_output": "654321\n"
+  },
+  {
+    "input": "654321",
+    "expected_output": "123456\n"
+  },
+  {
+    "input": "1000000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "1234567",
+    "expected_output": "7654321\n"
+  },
+  {
+    "input": "7654321",
+    "expected_output": "1234567\n"
+  },
+  {
+    "input": "10000000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "12345678",
+    "expected_output": "87654321\n"
+  },
+  {
+    "input": "100000000",
+    "expected_output": "1\n"
+  },
+  {
+    "input": "123456789",
+    "expected_output": "987654321\n"
+  },
+  {
+    "input": "987654321",
+    "expected_output": "123456789\n"
+  },
+  {
+    "input": "2000000000",
+    "expected_output": "2\n"
+  },
+  {
+    "input": "71452002",
+    "expected_output": "20025417\n"
+  },
+  {
+    "input": "81999530",
+    "expected_output": "3599918\n"
+  },
+  {
+    "input": "935533628",
+    "expected_output": "826335539\n"
+  },
+  {
+    "input": "589162163",
+    "expected_output": "361261985\n"
+  },
+  {
+    "input": "215885065",
+    "expected_output": "560588512\n"
+  },
+  {
+    "input": "744135491",
+    "expected_output": "194531447\n"
+  },
+  {
+    "input": "616950326",
+    "expected_output": "623059616\n"
+  },
+  {
+    "input": "348431028",
+    "expected_output": "820134843\n"
+  },
+  {
+    "input": "203748390",
+    "expected_output": "93847302\n"
+  },
+  {
+    "input": "485877085",
+    "expected_output": "580778584\n"
+  },
+  {
+    "input": "911079284",
+    "expected_output": "482970119\n"
+  },
+  {
+    "input": "416227256",
+    "expected_output": "652722614\n"
+  },
+  {
+    "input": "48997851",
+    "expected_output": "15879984\n"
+  },
+  {
+    "input": "683220636",
+    "expected_output": "636022386\n"
+  },
+  {
+    "input": "669690304",
+    "expected_output": "403096966\n"
+  },
+  {
+    "input": "765476233",
+    "expected_output": "332674567\n"
+  },
+  {
+    "input": "808892159",
+    "expected_output": "951298808\n"
+  },
+  {
+    "input": "150510180",
+    "expected_output": "81015051\n"
+  },
+  {
+    "input": "131929630",
+    "expected_output": "36929131\n"
+  },
+  {
+    "input": "600929127",
+    "expected_output": "721929006\n"
+  },
+  {
+    "input": "295182760",
+    "expected_output": "67281592\n"
+  },
+  {
+    "input": "463018331",
+    "expected_output": "133810364\n"
+  },
+  {
+    "input": "303654729",
+    "expected_output": "927456303\n"
+  },
+  {
+    "input": "377952776",
+    "expected_output": "677259773\n"
+  },
+  {
+    "input": "558718107",
+    "expected_output": "701817855\n"
+  },
+  {
+    "input": "657541241",
+    "expected_output": "142145756\n"
+  },
+  {
+    "input": "728557226",
+    "expected_output": "622755827\n"
+  },
+  {
+    "input": "555240441",
+    "expected_output": "144042555\n"
+  },
+  {
+    "input": "345707948",
+    "expected_output": "849707543\n"
+  },
+  {
+    "input": "858709950",
+    "expected_output": "59907858\n"
+  },
+  {
+    "input": "831330240",
+    "expected_output": "42033138\n"
+  },
+  {
+    "input": "621624363",
+    "expected_output": "363426126\n"
+  },
+  {
+    "input": "423583963",
+    "expected_output": "369385324\n"
+  },
+  {
+    "input": "507065969",
+    "expected_output": "969560705\n"
+  },
+  {
+    "input": "108845909",
+    "expected_output": "909548801\n"
+  },
+  {
+    "input": "106400788",
+    "expected_output": "887004601\n"
+  },
+  {
+    "input": "289269038",
+    "expected_output": "830962982\n"
+  },
+  {
+    "input": "424019492",
+    "expected_output": "294910424\n"
+  },
+  {
+    "input": "952166981",
+    "expected_output": "189661259\n"
+  },
+  {
+    "input": "588900095",
+    "expected_output": "590009885\n"
+  },
+  {
+    "input": "88726684",
+    "expected_output": "48662788\n"
+  },
+  {
+    "input": "48816728",
+    "expected_output": "82761884\n"
+  }
+]
+}
