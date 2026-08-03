@@ -47,9 +47,10 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 	}
 
 	for _, testCase := range dto.TestCases {
-		passed := false
 		//running code with input
 		runResp, err := s.runner.Run(runCtx, compRes.Artifact, testCase.Input, dto.Language)
+		passed := runResp.Stdout == testCase.ExpectedOutput
+
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				return &dtos.JudgeResponseDto{Status: constants.StatusTLE}, nil
@@ -64,8 +65,7 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 			Passed:         passed,
 		})
 
-		if runResp.Stdout != testCase.ExpectedOutput {
-
+		if !passed {
 			break
 		}
 		judgeResult.Passed += 1
