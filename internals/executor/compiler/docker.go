@@ -6,7 +6,7 @@ import (
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
-	"juri/internals/executor/docker_helpers"
+
 	"juri/internals/executor/languages"
 	"log"
 	"os"
@@ -98,10 +98,10 @@ func (d *DockerCompiler) Compile(
 		return nil, fmt.Errorf("docker container start: %w", err)
 	}
 	// Run the language-specific compilation command inside the container.
-	compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
-	if err != nil {
-		return nil, fmt.Errorf("compile command: %w", err)
-	}
+	// compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("compile command: %w", err)
+	// }
 
 	success = true
 	// Return the execution artifact and compile output.
@@ -112,22 +112,8 @@ func (d *DockerCompiler) Compile(
 			ContainerID:    resp.ID,
 			Cleanup:        cleanup,
 		},
-		ExitCode: compResp.ExitCode,
-		Stderr:   compResp.Stderr,
-		Stdout:   compResp.Stdout,
+		// ExitCode: compResp.ExitCode,
+		// Stderr:   compResp.Stderr,
+		// Stdout:   compResp.Stdout,
 	}, nil
-}
-
-func (d *DockerCompiler) executeCompileCommand(
-	ctx context.Context, language constants.Language, containerID string,
-) (*docker_helpers.Result, error) {
-	command := languages.CompileCommands[language]
-	if command == nil { // Interpreted languages have no compilation step.
-		return &docker_helpers.Result{}, nil
-	}
-
-	return docker_helpers.Execute(ctx, d.docker, docker_helpers.Request{
-		ContainerID: containerID,
-		Command:     command,
-	})
 }
