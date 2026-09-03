@@ -21,7 +21,7 @@ func NewDockerRunner(cfg *config.Config, docker *client.Client) Runner {
 // Run executes a compiled submission inside the prepared container.
 func (d *DockerRunner) Run(
 	ctx context.Context,
-	wsArtifact *executor.ExecutionArtifact,
+	runner *executor.Runner,
 	stdin string,
 	language constants.Language) (*executor.RunnerResponse, error) {
 

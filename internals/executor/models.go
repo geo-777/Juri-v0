@@ -1,20 +1,25 @@
 package executor
 
-import "juri/internals/constants"
+import (
+	"encoding/json"
+	"juri/internals/constants"
+	"net"
+)
 
-// ExecutionArtifact describes the temporary execution workspace created for a submission.
-type ExecutionArtifact struct {
-	ContainerID    string
-	ContainerName  string
+// Runner represents a reusable persistent runner.
+type Runner struct {
+	Conn        net.Conn
+	Reader      *json.Decoder
+	Writer      *json.Encoder
+	ContainerID string
+
 	SourceFilePath string
-	SourceDirPath  string
-
-	Cleanup func() error
+	Cleanup        func() error
 }
 
 // CompileResult stores the output of a compilation step.
 type CompileResult struct {
-	Artifact *ExecutionArtifact
+	Runner   *Runner
 	Stderr   string
 	Stdout   string
 	ExitCode int

@@ -35,7 +35,7 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 		return nil, fmt.Errorf("run service compile submission: %w", err)
 	}
 	defer func() {
-		if err := compRes.Artifact.Cleanup(); err != nil {
+		if err := compRes.Runner.Cleanup(); err != nil {
 			log.Printf("run service cleanup artifact: %v", err)
 		}
 	}()
@@ -48,7 +48,7 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 
 	for _, testCase := range dto.TestCases {
 		//running code with input
-		runResp, err := s.runner.Run(runCtx, compRes.Artifact, testCase.Input, dto.Language)
+		runResp, err := s.runner.Run(runCtx, compRes.Runner, testCase.Input, dto.Language)
 		passed := runResp.Stdout == testCase.ExpectedOutput
 
 		if err != nil {

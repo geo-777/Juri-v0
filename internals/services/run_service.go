@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"juri/internals/api/dtos"
 	"juri/internals/constants"
@@ -33,7 +32,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 		return nil, fmt.Errorf("run service compile submission: %w", err)
 	}
 	defer func() {
-		if err := compRes.Artifact.Cleanup(); err != nil {
+		if err := compRes.Runner.Cleanup(); err != nil {
 			log.Printf("run service cleanup artifact: %v", err)
 		}
 	}()
@@ -46,18 +45,6 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 		}, nil
 	}
 	// Execute the compiled artifact with the provided stdin.
-	runResp, err := s.runner.Run(runCtx, compRes.Artifact, dto.Stdin, dto.Language)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
 
-			return &dtos.RunResponseDto{Status: constants.StatusTLE}, nil
-		}
-		return nil, fmt.Errorf("run service execute submission: %w", err)
-	}
-	return &dtos.RunResponseDto{
-		Stdout:   runResp.Stdout,
-		Stderr:   runResp.Stderr,
-		ExitCode: runResp.ExitCode,
-		Status:   runResp.Status,
-	}, nil
+	return &dtos.RunResponseDto{}, nil
 }

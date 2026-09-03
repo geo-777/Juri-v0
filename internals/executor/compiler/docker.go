@@ -8,6 +8,7 @@ import (
 	"juri/internals/executor"
 
 	"juri/internals/executor/languages"
+	"juri/internals/executor/persistent"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func NewDockerCompiler(cfg *config.Config, docker *client.Client) Compiler {
 	return &DockerCompiler{cfg: cfg, docker: docker}
 }
 
-// Compile creates a temporary workspace, starts a container, and runs the compile step.
+// Compile creates a temporary workspace, starts a container, iniates persistent runner and finally compiles program
 func (d *DockerCompiler) Compile(
 	ctx context.Context,
 	language constants.Language,
@@ -43,15 +44,16 @@ func (d *DockerCompiler) Compile(
 		return nil, fmt.Errorf("resolve workspace path: %w", err)
 	}
 	pidLimit := int64(128)
-
 	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config: &container.Config{
-			Image:       languages.ImageNames[language],
-			WorkingDir:  "/workspace",
-			AttachStdin: true,
-			OpenStdin:   true,
-			Tty:         false,
+			Image:        languages.ImageNames[language],
+			WorkingDir:   "/workspace",
+			AttachStdin:  true,
+			AttachStdout: true,
+			AttachStderr: true,
+			OpenStdin:    true,
+			Tty:          true,
 		},
 		HostConfig: &container.HostConfig{
 			NetworkMode: "none",
@@ -103,17 +105,25 @@ func (d *DockerCompiler) Compile(
 	// 	return nil, fmt.Errorf("compile command: %w", err)
 	// }
 
+	runner, err := persistent.CreateRunner(ctx, d.docker, resp.ID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to start docker attach : %w", err)
+	}
+	runner.SourceFilePath = sourceDirPath
+	runner.Cleanup = cleanup
+
+	response, err := persistent.ExecuteRunner(ctx, runner, persistent.Request{
+		Type:     "compile",
+		Language: language,
+	})
+
+	fmt.Println(response)
+
 	success = true
 	// Return the execution artifact and compile output.
 	return &executor.CompileResult{
-		Artifact: &executor.ExecutionArtifact{
-			SourceFilePath: sourceFilePath,
-			SourceDirPath:  sourceDirPath,
-			ContainerID:    resp.ID,
-			Cleanup:        cleanup,
-		},
-		// ExitCode: compResp.ExitCode,
-		// Stderr:   compResp.Stderr,
-		// Stdout:   compResp.Stdout,
+		Runner:   runner,
+		Stdout:   response.Output,
+		ExitCode: response.Metadata.ExitCode,
 	}, nil
 }

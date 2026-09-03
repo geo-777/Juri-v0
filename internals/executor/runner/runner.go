@@ -10,5 +10,6 @@ import (
 )
 
 type Runner interface {
-	Run(ctx context.Context, wsArtifact *executor.ExecutionArtifact, stdin string, languages constants.Language) (*executor.RunnerResponse, error)
+	Run(ctx context.Context, runner *executor.Runner,
+		stdin string, languages constants.Language) (*executor.RunnerResponse, error)
 }
