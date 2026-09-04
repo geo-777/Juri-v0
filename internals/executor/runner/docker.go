@@ -5,6 +5,7 @@ import (
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
+	"juri/internals/executor/persistent"
 
 	"github.com/moby/moby/client"
 )
@@ -25,5 +26,22 @@ func (d *DockerRunner) Run(
 	stdin string,
 	language constants.Language) (*executor.RunnerResponse, error) {
 
-	return nil, nil
+	response, err := persistent.ExecuteRunner(ctx, runner, persistent.Request{
+		Type:     "run",
+		Language: language,
+		Stdin:    stdin,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &executor.RunnerResponse{
+		Stdout: response.Output,
+		Stderr: response.Error,
+
+		RuntimeNS: response.Metadata.RuntimeNS,
+		ExitCode:  response.Metadata.ExitCode,
+		MemoryKB:  response.Metadata.MemoryKB,
+	}, nil
 }

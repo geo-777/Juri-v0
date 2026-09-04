@@ -56,19 +56,19 @@ type Language struct {
 
 // contains all the commands necessary for running and compiling
 var Languages = map[string]Language{
-	"C": {
+	"c": {
 		Compile: []string{"gcc", "main.c", "-O2", "-o", "program"},
 		Run:     []string{"./program"},
 	},
-	"CPP": {
+	"cpp": {
 		Compile: []string{"g++", "main.cpp", "-O2", "-o", "program"},
 		Run:     []string{"./program"},
 	},
-	"Java": {
+	"java": {
 		Compile: []string{"javac", "Main.java"},
 		Run:     []string{"java", "Main"},
 	},
-	"Python": {
+	"python": {
 		Run: []string{"python3", "main.py"},
 	},
 }

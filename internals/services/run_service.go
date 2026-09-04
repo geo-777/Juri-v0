@@ -7,7 +7,6 @@ import (
 	"juri/internals/constants"
 	"juri/internals/executor/compiler"
 	"juri/internals/executor/runner"
-	"log"
 	"time"
 )
 
@@ -31,11 +30,11 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	if err != nil {
 		return nil, fmt.Errorf("run service compile submission: %w", err)
 	}
-	defer func() {
-		if err := compRes.Runner.Cleanup(); err != nil {
-			log.Printf("run service cleanup artifact: %v", err)
-		}
-	}()
+	// defer func() {
+	// 	if err := compRes.Runner.Cleanup(); err != nil {
+	// 		log.Printf("run service cleanup artifact: %v", err)
+	// 	}
+	// }()
 	if compRes.ExitCode != 0 {
 		return &dtos.RunResponseDto{
 			ExitCode: compRes.ExitCode,
@@ -46,5 +45,18 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	}
 	// Execute the compiled artifact with the provided stdin.
 
-	return &dtos.RunResponseDto{}, nil
+	resp, err := s.runner.Run(runCtx, compRes.Runner, dto.Stdin, dto.Language)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Output :", resp)
+
+	return &dtos.RunResponseDto{
+		Stdout:          resp.Stdout,
+		Stderr:          resp.Stderr,
+		ExitCode:        resp.ExitCode,
+		MemoryKB:        resp.MemoryKB,
+		ExecutionTimeNs: resp.RuntimeNS,
+	}, nil
 }

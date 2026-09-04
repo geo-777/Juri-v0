@@ -16,10 +16,10 @@ import (
 //responsible for creating persistent runner and executing commands
 
 type Request struct {
-	Type      string
-	Language  constants.Language
-	Stdin     string
-	TimeLimit int
+	Type      string             `json:"type"`
+	Language  constants.Language `json:"langauge"`
+	Stdin     string             `json:"stdin"`
+	TimeLimit int                `json:"time_limit"`
 }
 
 type Metadata struct {
@@ -70,6 +70,9 @@ func ExecuteRunner(
 	req Request,
 ) (*Response, error) {
 
+	data, _ := json.MarshalIndent(req, "", "  ")
+	fmt.Println("Request:\n", string(data))
+
 	if err := runner.Writer.Encode(req); err != nil {
 		return nil, fmt.Errorf("failed to write runner request: %w", err)
 	}
@@ -79,6 +82,8 @@ func ExecuteRunner(
 	if err := runner.Reader.Decode(&res); err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
+
+	fmt.Println("REsponse,", res)
 
 	return &res, nil
 }

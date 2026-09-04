@@ -99,11 +99,6 @@ func (d *DockerCompiler) Compile(
 	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		return nil, fmt.Errorf("docker container start: %w", err)
 	}
-	// Run the language-specific compilation command inside the container.
-	// compResp, err := d.executeCompileCommand(ctx, language, resp.ID)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("compile command: %w", err)
-	// }
 
 	runner, err := persistent.CreateRunner(ctx, d.docker, resp.ID)
 	if err != nil {
@@ -116,8 +111,6 @@ func (d *DockerCompiler) Compile(
 		Type:     "compile",
 		Language: language,
 	})
-
-	fmt.Println(response)
 
 	success = true
 	// Return the execution artifact and compile output.
