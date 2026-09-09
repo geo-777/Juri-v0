@@ -17,7 +17,7 @@ import (
 
 type Request struct {
 	Type      string             `json:"type"`
-	Language  constants.Language `json:"langauge"`
+	Language  constants.Language `json:"language"`
 	Stdin     string             `json:"stdin"`
 	TimeLimit int                `json:"time_limit"`
 }

@@ -34,7 +34,7 @@ func (h *RunHandler) Run(ctx *gin.Context) {
 	response, err := h.service.Run(reqBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
+			"error": "internal server error :" + err.Error(),
 		})
 		return
 	}

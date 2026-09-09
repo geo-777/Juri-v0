@@ -38,11 +38,13 @@ func (d *DockerCompiler) Compile(
 	if err != nil {
 		return nil, fmt.Errorf("create workspace: %w", err)
 	}
+
 	sourceDirPath, err := filepath.Abs(filepath.Dir(sourceFilePath))
 	if err != nil {
 		_ = os.RemoveAll(filepath.Dir(sourceFilePath))
 		return nil, fmt.Errorf("resolve workspace path: %w", err)
 	}
+
 	pidLimit := int64(128)
 	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
@@ -66,6 +68,7 @@ func (d *DockerCompiler) Compile(
 			Binds: []string{sourceDirPath + ":/workspace"},
 		},
 	})
+
 	if err != nil {
 		_ = os.RemoveAll(sourceDirPath) //cleaning ws
 		return nil, fmt.Errorf("docker container create: %w", err)
@@ -111,6 +114,9 @@ func (d *DockerCompiler) Compile(
 		Type:     "compile",
 		Language: language,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("execute compile request: %w", err)
+	}
 
 	success = true
 	// Return the execution artifact and compile output.

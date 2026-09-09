@@ -30,6 +30,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	if err != nil {
 		return nil, fmt.Errorf("run service compile submission: %w", err)
 	}
+
 	// defer func() {
 	// 	if err := compRes.Runner.Cleanup(); err != nil {
 	// 		log.Printf("run service cleanup artifact: %v", err)

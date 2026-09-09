@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -81,10 +82,22 @@ func main() {
 		var req Request
 		//reads a single json req
 		if err := decoder.Decode(&req); err != nil {
-			return
+			if err == io.EOF {
+				return
+			}
+
+			handleError(encoder, err)
+			continue
 		}
 		handleRequest(encoder, req)
 	}
+}
+
+func handleError(encoder *json.Encoder, err error) {
+	_ = encoder.Encode(Response{
+		Success: false,
+		Error:   "runner panic: " + fmt.Sprint(err),
+	})
 }
 
 // handler
