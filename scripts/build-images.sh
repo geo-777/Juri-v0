@@ -8,6 +8,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Keep the runner embedded in each image in sync with the source runner.
+"$PROJECT_DIR/scripts/build-runner.sh"
+
 echo "Building from: $PROJECT_DIR"
 echo ""
 

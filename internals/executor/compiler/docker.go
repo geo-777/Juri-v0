@@ -98,11 +98,6 @@ func (d *DockerCompiler) Compile(
 			}
 		}
 	}()
-	// Start the container so the compile command can run.
-	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
-		return nil, fmt.Errorf("docker container start: %w", err)
-	}
-
 	runner, err := persistent.CreateRunner(ctx, d.docker, resp.ID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start docker attach : %w", err)
@@ -110,12 +105,31 @@ func (d *DockerCompiler) Compile(
 	runner.SourceFilePath = sourceDirPath
 	runner.Cleanup = cleanup
 
+	// Attach before starting so the runner cannot exit before its protocol
+	// stream is connected.
+	if _, err := d.docker.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
+		return nil, fmt.Errorf("docker container start: %w", err)
+	}
+
 	response, err := persistent.ExecuteRunner(ctx, runner, persistent.Request{
 		Type:     "compile",
 		Language: language,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("execute compile request: %w", err)
+	}
+
+	if !response.Success {
+		exitCode := response.Metadata.ExitCode
+		if exitCode == 0 {
+			exitCode = 1
+		}
+		return &executor.CompileResult{
+			Runner:   runner,
+			Stdout:   response.Output,
+			Stderr:   response.Error,
+			ExitCode: exitCode,
+		}, nil
 	}
 
 	success = true

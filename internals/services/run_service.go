@@ -25,6 +25,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	// Use a short timeout to prevent runaway code from blocking the service indefinitely.
 	runCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	// Compile the submission into an executable artifact.
 	compRes, err := s.compiler.Compile(runCtx, dto.Language, dto.SourceCode)
 	if err != nil {

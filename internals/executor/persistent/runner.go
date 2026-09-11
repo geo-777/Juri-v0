@@ -22,18 +22,19 @@ type Request struct {
 	TimeLimit int                `json:"time_limit"`
 }
 
+type Response struct {
+	Success bool   `json:"success"`
+	Output  string `json:"output,omitempty"`
+	Error   string `json:"error,omitempty"`
+
+	Metadata Metadata `json:"metadata,omitempty"`
+}
+
 type Metadata struct {
 	RuntimeNS int64 `json:"runtime_ns"`
 	MemoryKB  int64 `json:"memory_kb"`
 	ExitCode  int   `json:"exit_code"`
 	TimedOut  bool  `json:"timed_out"`
-}
-
-type Response struct {
-	Success  bool     `json:"success"`
-	Output   string   `json:"output,omitempty"`
-	Error    string   `json:"error,omitempty"`
-	Metadata Metadata `json:"metadata,omitempty"`
 }
 
 func CreateRunner(
