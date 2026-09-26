@@ -55,7 +55,9 @@ func (d *DockerCompiler) Compile(
 			AttachStdout: true,
 			AttachStderr: true,
 			OpenStdin:    true,
-			Tty:          true,
+			// The persistent runner speaks a JSON protocol over stdin/stdout.
+			// A TTY echoes stdin back into stdout and corrupts that protocol.
+			Tty: false,
 		},
 		HostConfig: &container.HostConfig{
 			NetworkMode: "none",

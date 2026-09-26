@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"juri/internals/constants"
 	"juri/internals/executor"
 
+	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/client"
 )
 
@@ -57,9 +59,17 @@ func CreateRunner(
 		return nil, err
 	}
 
+	// Without a TTY Docker multiplexes stdout and stderr in its attach stream.
+	// Keep only stdout for the JSON response decoder while draining stderr.
+	stdoutReader, stdoutWriter := io.Pipe()
+	go func() {
+		_, copyErr := stdcopy.StdCopy(stdoutWriter, io.Discard, attachResp.Reader)
+		_ = stdoutWriter.CloseWithError(copyErr)
+	}()
+
 	return &executor.Runner{
 		Conn:        attachResp.Conn,
-		Reader:      json.NewDecoder(attachResp.Reader),
+		Reader:      json.NewDecoder(stdoutReader),
 		Writer:      json.NewEncoder(attachResp.Conn),
 		ContainerID: containerID,
 	}, nil
