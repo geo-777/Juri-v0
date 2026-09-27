@@ -1,4 +1,4 @@
-package persistent
+package protocol
 
 import (
 	"context"
@@ -81,8 +81,7 @@ func ExecuteRunner(
 	req Request,
 ) (*Response, error) {
 
-	data, _ := json.MarshalIndent(req, "", "  ")
-	fmt.Println("Request:\n", string(data))
+	json.MarshalIndent(req, "", "  ")
 
 	if err := runner.Writer.Encode(req); err != nil {
 		return nil, fmt.Errorf("failed to write runner request: %w", err)
@@ -93,8 +92,5 @@ func ExecuteRunner(
 	if err := runner.Reader.Decode(&res); err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
-
-	fmt.Println("REsponse,", res)
-
 	return &res, nil
 }

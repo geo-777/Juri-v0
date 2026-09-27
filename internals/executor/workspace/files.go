@@ -1,4 +1,4 @@
-package executor
+package workspace
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-// CreateWorkspace prepares a temporary job directory and writes the submission source file into it.
-func CreateWorkspace(language constants.Language, sourceCode string, root string) (string, error) {
+// CreateFiles prepares a temporary job directory and writes the submission source file into it.
+func CreateFiles(language constants.Language, sourceCode string, root string) (string, error) {
 	// Generate a short unique ID for the job folder.
 	id := utils.GenerateNanoId(6)
 

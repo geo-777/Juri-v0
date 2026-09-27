@@ -1,4 +1,4 @@
-package compiler
+package workspace
 
 import (
 	"context"
@@ -6,9 +6,8 @@ import (
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
-
 	"juri/internals/executor/languages"
-	"juri/internals/executor/persistent"
+	"juri/internals/executor/protocol"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,23 +17,24 @@ import (
 	"github.com/moby/moby/client"
 )
 
-type DockerCompiler struct {
+type DockerRunnerFactory struct {
 	cfg    *config.Config
 	docker *client.Client
 }
 
-func NewDockerCompiler(cfg *config.Config, docker *client.Client) Compiler {
-	return &DockerCompiler{cfg: cfg, docker: docker}
+func NewDockerRunnerFactory(
+	cfg *config.Config,
+	docker *client.Client,
+) *DockerRunnerFactory {
+	return &DockerRunnerFactory{
+		cfg:    cfg,
+		docker: docker,
+	}
 }
 
-// Compile creates a temporary workspace, starts a container, iniates persistent runner and finally compiles program
-func (d *DockerCompiler) Compile(
-	ctx context.Context,
-	language constants.Language,
-	sourceCode string,
-) (*executor.CompileResult, error) {
+func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constants.Language, sourceCode string) (*executor.Runner, error) {
 	// Create a temporary workspace for the submitted source file.
-	sourceFilePath, err := executor.CreateWorkspace(language, sourceCode, d.cfg.WorkspaceRoot)
+	sourceFilePath, err := CreateFiles(language, sourceCode, d.cfg.WorkspaceRoot)
 	if err != nil {
 		return nil, fmt.Errorf("create workspace: %w", err)
 	}
@@ -100,7 +100,7 @@ func (d *DockerCompiler) Compile(
 			}
 		}
 	}()
-	runner, err := persistent.CreateRunner(ctx, d.docker, resp.ID)
+	runner, err := protocol.CreateRunner(ctx, d.docker, resp.ID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start docker attach : %w", err)
 	}
@@ -113,32 +113,8 @@ func (d *DockerCompiler) Compile(
 		return nil, fmt.Errorf("docker container start: %w", err)
 	}
 
-	response, err := persistent.ExecuteRunner(ctx, runner, persistent.Request{
-		Type:     "compile",
-		Language: language,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("execute compile request: %w", err)
-	}
-
-	if !response.Success {
-		exitCode := response.Metadata.ExitCode
-		if exitCode == 0 {
-			exitCode = 1
-		}
-		return &executor.CompileResult{
-			Runner:   runner,
-			Stdout:   response.Output,
-			Stderr:   response.Error,
-			ExitCode: exitCode,
-		}, nil
-	}
-
 	success = true
 	// Return the execution artifact and compile output.
-	return &executor.CompileResult{
-		Runner:   runner,
-		Stdout:   response.Output,
-		ExitCode: response.Metadata.ExitCode,
-	}, nil
+	return runner, nil
+
 }

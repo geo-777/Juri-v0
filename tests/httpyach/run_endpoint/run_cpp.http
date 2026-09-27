@@ -4,5 +4,5 @@ Content-Type: application/json
 {
   "language": "cpp",
   "source_code": "#include <iostream>\n#include <string>\n#include <algorithm>\n\nusing namespace std;\n\nint main() {\n    string s;\n    cin >> s;\n    reverse(s.begin(), s.end());\n    cout << s << '\\n';\n}",
-  "stdin": "abcdefghijklmnopqrstuvwxyz"
+  "stdin": "ninte thantha aara myre"
 }

@@ -3,8 +3,8 @@ package main
 import (
 	"juri/config"
 	"juri/internals/api/handlers"
-	"juri/internals/executor/compiler"
-	"juri/internals/executor/runner"
+	"juri/internals/executor/workspace"
+
 	"juri/internals/services"
 	"log"
 	"net/http"
@@ -28,11 +28,10 @@ func main() {
 	}
 
 	// Wire the compiler, runner, and service layers together.
-	comp := compiler.NewDockerCompiler(cfg, dockerClient)
-	run := runner.NewDockerRunner(cfg, dockerClient)
+	runnerFactory := workspace.NewDockerRunnerFactory(cfg, dockerClient)
 
-	runService := services.NewRunService(comp, run)
-	judgeService := services.NewJudgeService(comp, run)
+	runService := services.NewRunService(runnerFactory)
+	judgeService := services.NewJudgeService()
 
 	runHandler := handlers.NewRunHandler(runService)
 	judgeHandler := handlers.NewJudgeHandler(judgeService)
