@@ -1,0 +1,52 @@
+POST http://localhost:8000/judge
+Content-Type: application/json
+
+{
+  "language": "java",
+  "source_code": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n\n        StringTokenizer st = new StringTokenizer(line);\n        int n = Integer.parseInt(st.nextToken());\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = Integer.parseInt(st.nextToken());\n        }\n\n        int target = Integer.parseInt(br.readLine());\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < n; i++) {\n            int need = target - nums[i];\n            if (map.containsKey(need)) {\n                System.out.println(map.get(need) + \" \" + i);\n                return;\n            }\n            map.put(nums[i], i);\n        }\n\n        System.out.println(-1);\n    }\n}",
+  "test_cases": [
+    {
+      "input": "4\n2 7 11 15\n9\n",
+      "expected_output": "0 1\n"
+    },
+    {
+      "input": "3\n3 2 4\n6\n",
+      "expected_output": "1 2\n"
+    },
+    {
+      "input": "4\n10 20 30 40\n30\n",
+      "expected_output": "0 1\n"
+    },
+    {
+      "input": "5\n1 5 1 2 3\n6\n",
+      "expected_output": "0 1\n"
+    },
+    {
+      "input": "6\n2 11 7 15 4 13\n9\n",
+      "expected_output": "0 2\n"
+    },
+    {
+      "input": "5\n8 1 4 6 9\n14\n",
+      "expected_output": "1 3\n"
+    },
+    {
+      "input": "4\n5 6 7 8\n13\n",
+      "expected_output": "-1\n"
+    },
+    {
+      "input": "6\n3 3 3 3 3 3\n6\n",
+      "expected_output": "0 1\n"
+    }
+  ]
+}
+
+# {
+#   "language": "java",
+#   "source_code": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n\n        StringTokenizer st = new StringTokenizer(line);\n        int n = Integer.parseInt(st.nextToken());\n        int[] nums = new int[n];\n        for (int i = 0; i < n; i++) {\n            nums[i] = Integer.parseInt(st.nextToken());\n        }\n\n        int target = Integer.parseInt(br.readLine());\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < n; i++) {\n            int need = target - nums[i];\n            if (map.containsKey(need)) {\n                System.out.println(map.get(need) + \" \" + i);\n                return;\n            }\n            map.put(nums[i], i);\n        }\n\n        System.out.println(-1);\n    }\n}",
+#   "test_cases": [
+#     {
+#       "input": "4\n2 7 11 15\n9\n",
+#       "expected_output": "0 1\n"
+#     }
+#   ]
+# }

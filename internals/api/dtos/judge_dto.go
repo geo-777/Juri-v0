@@ -38,7 +38,7 @@ type JudgeResultDto struct {
 	Passed int `json:"passed"`
 	Total  int `json:"total"`
 
-	TestCases []JudgeTestCaseResultDto `json:"test_cases"`
+	TestCases []JudgeTestCaseResultDto `json:"test_cases,omitempty"`
 }
 
 type JudgeResponseDto struct {
