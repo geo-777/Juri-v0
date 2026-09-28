@@ -18,10 +18,11 @@ import (
 //responsible for creating persistent runner and executing commands
 
 type Request struct {
-	Type      string             `json:"type"`
-	Language  constants.Language `json:"language"`
-	Stdin     string             `json:"stdin"`
-	TimeLimit int                `json:"time_limit"`
+	Type          string             `json:"type"`
+	Language      constants.Language `json:"language"`
+	Stdin         string             `json:"stdin"`
+	TimeLimit     int                `json:"time_limit"`
+	MemoryLimitKB int                `json:"memory_limit_kb,omitempty"`
 }
 
 type Response struct {
@@ -33,10 +34,11 @@ type Response struct {
 }
 
 type Metadata struct {
-	RuntimeNS int64 `json:"runtime_ns"`
-	MemoryKB  int64 `json:"memory_kb"`
-	ExitCode  int   `json:"exit_code"`
-	TimedOut  bool  `json:"timed_out"`
+	RuntimeNS      int64 `json:"runtime_ns"`
+	MemoryKB       int64 `json:"memory_kb"`
+	ExitCode       int   `json:"exit_code"`
+	TimedOut       bool  `json:"timed_out"`
+	MemoryExceeded bool  `json:"memory_exceeded"`
 }
 
 func CreateRunner(
@@ -81,16 +83,27 @@ func ExecuteRunner(
 	req Request,
 ) (*Response, error) {
 
-	json.MarshalIndent(req, "", "  ")
-
 	if err := runner.Writer.Encode(req); err != nil {
 		return nil, fmt.Errorf("failed to write runner request: %w", err)
 	}
 
-	var res Response
-
-	if err := runner.Reader.Decode(&res); err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
+	type decodeResult struct {
+		response Response
+		err      error
 	}
-	return &res, nil
+	decoded := make(chan decodeResult, 1)
+	go func() {
+		var res Response
+		err := runner.Reader.Decode(&res)
+		decoded <- decodeResult{res, err}
+	}()
+	select {
+	case result := <-decoded:
+		if result.err != nil {
+			return nil, fmt.Errorf("failed to read response: %w", result.err)
+		}
+		return &result.response, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }

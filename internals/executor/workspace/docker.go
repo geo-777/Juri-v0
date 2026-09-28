@@ -32,7 +32,7 @@ func NewDockerRunnerFactory(
 	}
 }
 
-func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constants.Language, sourceCode string) (*executor.Runner, error) {
+func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constants.Language, sourceCode string, memoryLimitKB int) (*executor.Runner, error) {
 	// Create a temporary workspace for the submitted source file.
 	sourceFilePath, err := CreateFiles(language, sourceCode, d.cfg.WorkspaceRoot)
 	if err != nil {
@@ -46,6 +46,9 @@ func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constan
 	}
 
 	pidLimit := int64(128)
+	if memoryLimitKB <= 0 {
+		memoryLimitKB = 128 * 1024
+	}
 	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config: &container.Config{
@@ -62,9 +65,9 @@ func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constan
 		HostConfig: &container.HostConfig{
 			NetworkMode: "none",
 			Resources: container.Resources{
-				Memory:    128 * 1024 * 1024, //128MB
-				NanoCPUs:  1_000_000_000,     //1 CPU
-				PidsLimit: &pidLimit,         // takes only pointer to int64
+				Memory:    int64(memoryLimitKB) * 1024,
+				NanoCPUs:  1_000_000_000, //1 CPU
+				PidsLimit: &pidLimit,     // takes only pointer to int64
 			},
 
 			Binds: []string{sourceDirPath + ":/workspace"},

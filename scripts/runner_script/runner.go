@@ -48,10 +48,11 @@ var allowedTypes = map[string]bool{
 // DTOs
 
 type Request struct {
-	Type        string `json:"type"`
-	Language    string `json:"language,omitempty"`
-	Stdin       string `json:"stdin,omitempty"`
-	TimeLimitMS int    `json:"time_limit,omitempty"`
+	Type          string `json:"type"`
+	Language      string `json:"language,omitempty"`
+	Stdin         string `json:"stdin,omitempty"`
+	TimeLimitMS   int    `json:"time_limit,omitempty"`
+	MemoryLimitKB int    `json:"memory_limit_kb,omitempty"`
 }
 
 type Response struct {
@@ -62,10 +63,11 @@ type Response struct {
 }
 
 type Metadata struct {
-	RuntimeNS int64 `json:"runtime_ns"`
-	MemoryKB  int64 `json:"memory_kb"`
-	ExitCode  int   `json:"exit_code"`
-	TimedOut  bool  `json:"timed_out"`
+	RuntimeNS      int64 `json:"runtime_ns"`
+	MemoryKB       int64 `json:"memory_kb"`
+	ExitCode       int   `json:"exit_code"`
+	TimedOut       bool  `json:"timed_out"`
+	MemoryExceeded bool  `json:"memory_exceeded"`
 }
 
 type Language struct {
@@ -179,6 +181,9 @@ func parseRequest(raw json.RawMessage) (Request, error) {
 	if req.TimeLimitMS > int(MaxTimeout/time.Millisecond) {
 		return req, fmt.Errorf("time_limit exceeds max allowed (%d ms)", MaxTimeout/time.Millisecond)
 	}
+	if req.MemoryLimitKB < 0 || req.MemoryLimitKB > 1024*1024 {
+		return req, errors.New("memory_limit_kb must be between 1 and 1048576")
+	}
 
 	return req, nil
 }
@@ -279,7 +284,6 @@ func run(req Request) Response {
 	if req.TimeLimitMS > 0 {
 		timeout = time.Duration(req.TimeLimitMS) * time.Millisecond
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -329,15 +333,18 @@ func run(req Request) Response {
 		Output:  out,
 		Error:   errorString(runErr),
 		Metadata: Metadata{
-			RuntimeNS: runtime.Nanoseconds(),
-			ExitCode:  exitCode(runErr),
-			TimedOut:  timedOut,
-			MemoryKB:  memoryKB,
+			RuntimeNS:      runtime.Nanoseconds(),
+			ExitCode:       exitCode(runErr),
+			TimedOut:       timedOut,
+			MemoryKB:       memoryKB,
+			MemoryExceeded: !timedOut && runErr != nil && (exitCode(runErr) == 137 || (req.MemoryLimitKB > 0 && memoryKB >= int64(req.MemoryLimitKB))),
 		},
 	}
 
 	if timedOut {
 		resp.Error = "time limit exceeded"
+	} else if resp.Metadata.MemoryExceeded {
+		resp.Error = "memory limit exceeded"
 	} else if isBinaryMissing(runErr) {
 		resp.Error = fmt.Sprintf("runtime not available for %q: %v", req.Language, runErr)
 	}
