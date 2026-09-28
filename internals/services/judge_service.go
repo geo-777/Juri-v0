@@ -22,7 +22,6 @@ func NewJudgeService(runnerFactory *workspace.DockerRunnerFactory) *JudgeService
 
 // Judge is the entry point for judge-related evaluation flow.
 func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, error) {
-	fmt.Println("I WAS SUMMONED")
 	timeLimit := dto.TimeLimitMs
 	if timeLimit == 0 {
 		timeLimit = 2000
@@ -39,10 +38,10 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 	if err != nil {
 		return nil, fmt.Errorf("runner object creation: %w", err)
 	}
-	//handles cleanup
+	// Always tear down the per-submission container and workspace.
 	defer func() {
 		if err := runner.Cleanup(); err != nil {
-			log.Printf("run service cleanup artifact: %v", err)
+			log.Printf("judge service cleanup artifact: %v", err)
 		}
 	}()
 	//handles compilation
@@ -54,25 +53,19 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 		return nil, fmt.Errorf("execute compile request: %w", err)
 	}
 	if !compRes.Success {
-		exitCode := compRes.Metadata.ExitCode
-		if exitCode == 0 {
-			exitCode = 1
-		}
 		return &dtos.JudgeResponseDto{
 			Status: constants.StatusCompilationError,
 			Stderr: compRes.Error,
 		}, nil
 	}
 
-	//judgement starts here
-	runCtx, runCancel := context.WithTimeout(context.Background(), time.Duration(timeLimit+250)*time.Millisecond)
-	defer runCancel()
+	// Each testcase gets its own execution deadline. Compilation is excluded
+	// from the user's execution time limit.
 	var judgeResult dtos.JudgeResultDto
-
-	var memoryTotal int64
-	var timeTotal int64
+	var peakMemoryKB, peakTimeNS int64
 
 	for _, testCase := range dto.TestCases {
+		runCtx, runCancel := context.WithTimeout(context.Background(), time.Duration(timeLimit+250)*time.Millisecond)
 		runnerResp, err := protocol.ExecuteRunner(runCtx, runner, protocol.Request{
 			Type:          "run",
 			Language:      dto.Language,
@@ -80,14 +73,18 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 			TimeLimit:     timeLimit,
 			MemoryLimitKB: memoryLimit,
 		})
-		passed := runnerResp.Output == testCase.ExpectedOutput
-
+		runCancel()
 		if err != nil {
 			if runCtx.Err() != nil {
-				return &dtos.JudgeResponseDto{Status: constants.StatusTLE, Stderr: "time limit exceeded"}, nil
+				judgeResult.Total = len(dto.TestCases)
+				return &dtos.JudgeResponseDto{Status: constants.StatusTLE, Stderr: "time limit exceeded", Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
 			}
 			return nil, fmt.Errorf("execute run request: %w", err)
 		}
+		peakMemoryKB = max(peakMemoryKB, runnerResp.Metadata.MemoryKB)
+		peakTimeNS = max(peakTimeNS, runnerResp.Metadata.RuntimeNS)
+
+		passed := runnerResp.Output == testCase.ExpectedOutput
 
 		judgeResult.TestCases = append(judgeResult.TestCases, dtos.JudgeTestCaseResultDto{
 			Input:          testCase.Input,
@@ -95,17 +92,24 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 			ActualOutput:   runnerResp.Output,
 			Passed:         passed,
 		})
+		if !runnerResp.Success {
+			status := constants.StatusRuntimeError
+			if runnerResp.Metadata.TimedOut {
+				status = constants.StatusTLE
+			} else if runnerResp.Metadata.MemoryExceeded {
+				status = constants.StatusMLE
+			}
+			judgeResult.Total = len(dto.TestCases)
+			return &dtos.JudgeResponseDto{Status: status, Stderr: runnerResp.Error, Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
+		}
 
 		if !passed {
 			break
 		}
 		judgeResult.Passed += 1
-		passed = true
-		memoryTotal += max(runnerResp.Metadata.MemoryKB, memoryTotal)
-		timeTotal += runnerResp.Metadata.RuntimeNS
 	}
 	judgeResult.Total = len(dto.TestCases)
 
-	return &dtos.JudgeResponseDto{Result: judgeResult, Status: constants.StatusSuccess, MemoryKB: memoryTotal,
-		ExecutionTimeNs: timeTotal}, nil
+	return &dtos.JudgeResponseDto{Result: judgeResult, Status: constants.StatusSuccess, MemoryKB: peakMemoryKB,
+		ExecutionTimeNs: peakTimeNS}, nil
 }

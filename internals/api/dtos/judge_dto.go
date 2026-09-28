@@ -20,8 +20,8 @@ type JudgeRequestDto struct {
 	TestCases []JudgeTestCaseDto `json:"test_cases" binding:"required,min=1,dive"`
 
 	// Optional overrides
-	TimeLimitMs int `json:"time_limit_ms" binding:"omitempty,gte=1"`
-	MemoryLimit int `json:"memory_limit_kb" binding:"omitempty,gte=1"`
+	TimeLimitMs int `json:"time_limit_ms" binding:"omitempty,gte=1,lte=15000"`
+	MemoryLimit int `json:"memory_limit_kb" binding:"omitempty,gte=1,lte=1048576"`
 }
 
 // Response DTOs
