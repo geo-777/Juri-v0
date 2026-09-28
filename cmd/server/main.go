@@ -31,7 +31,7 @@ func main() {
 	runnerFactory := workspace.NewDockerRunnerFactory(cfg, dockerClient)
 
 	runService := services.NewRunService(runnerFactory)
-	judgeService := services.NewJudgeService()
+	judgeService := services.NewJudgeService(runnerFactory)
 
 	runHandler := handlers.NewRunHandler(runService)
 	judgeHandler := handlers.NewJudgeHandler(judgeService)

@@ -14,11 +14,11 @@ import (
 
 // RunService coordinates compilation and execution for a single submission.
 type RunService struct {
-	runnerFactor *workspace.DockerRunnerFactory
+	runnerFactory *workspace.DockerRunnerFactory
 }
 
-func NewRunService(runnerFactor *workspace.DockerRunnerFactory) *RunService {
-	return &RunService{runnerFactor: runnerFactor}
+func NewRunService(runnerFactory *workspace.DockerRunnerFactory) *RunService {
+	return &RunService{runnerFactory: runnerFactory}
 }
 
 // Run compiles a submission, executes it, and returns the observed result.
@@ -35,7 +35,7 @@ func (s *RunService) Run(dto dtos.RunRequestDto) (*dtos.RunResponseDto, error) {
 	defer cancel()
 
 	// Create runner artifact.
-	runner, err := s.runnerFactor.CreateRunner(setupCtx, dto.Language, dto.SourceCode, memoryLimit)
+	runner, err := s.runnerFactory.CreateRunner(setupCtx, dto.Language, dto.SourceCode, memoryLimit)
 	if err != nil {
 		return nil, fmt.Errorf("runner object creation: %w", err)
 	}

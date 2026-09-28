@@ -414,7 +414,8 @@ func killProcessGroup(cmd *exec.Cmd) {
 // vars that might have been set on the container.
 func minimalEnv() []string {
 	return []string{
-		"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		// Temurin installs Java under JAVA_HOME instead of a system bin dir.
+		"PATH=/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 		"HOME=" + WorkDir,
 		"LANG=C.UTF-8",
 	}
