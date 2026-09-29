@@ -1,23 +1,22 @@
-package dtos
+package api
 
 import (
 	"juri/internals/constants"
 )
 
 // Request DTOs
-
-type JudgeTestCaseDto struct {
+type SubmissionTestCaseDto struct {
 	Input          string `json:"input" binding:"required"`
 	ExpectedOutput string `json:"expected_output" binding:"required"`
 }
 
-// JudgeRequestDto captures the input payload for a judge request.
-type JudgeRequestDto struct {
+// SubmissionRequestDto captures the input payload for a judge request.
+type SubmissionRequestDto struct {
 	Language constants.Language `json:"language" binding:"required,oneof=cpp c java python"`
 
 	SourceCode string `json:"source_code" binding:"required"`
 
-	TestCases []JudgeTestCaseDto `json:"test_cases" binding:"required,min=1,dive"`
+	TestCases []SubmissionTestCaseDto `json:"test_cases" binding:"required,min=1,dive"`
 
 	// Optional overrides
 	TimeLimitMs int `json:"time_limit_ms" binding:"omitempty,gte=1,lte=15000"`
@@ -25,7 +24,6 @@ type JudgeRequestDto struct {
 }
 
 // Response DTOs
-
 type JudgeTestCaseResultDto struct {
 	Input          string `json:"input"`
 	ExpectedOutput string `json:"expected_output"`

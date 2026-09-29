@@ -1,9 +1,10 @@
-package services
+package judge
 
 import (
 	"context"
 	"fmt"
-	"juri/internals/api/dtos"
+
+	"juri/internals/api"
 	"juri/internals/constants"
 	"juri/internals/executor/protocol"
 	"juri/internals/executor/workspace"
@@ -21,7 +22,7 @@ func NewJudgeService(runnerFactory *workspace.DockerRunnerFactory) *JudgeService
 }
 
 // Judge is the entry point for judge-related evaluation flow.
-func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, error) {
+func (s *JudgeService) Judge(dto api.SubmissionRequestDto) (*api.JudgeResponseDto, error) {
 	// Enforcing defaults when the request does not specify limits.
 	timeLimit := dto.TimeLimitMs
 	if timeLimit == 0 {
@@ -54,14 +55,14 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 		return nil, fmt.Errorf("execute compile request: %w", err)
 	}
 	if !compRes.Success {
-		return &dtos.JudgeResponseDto{
+		return &api.JudgeResponseDto{
 			Status: constants.StatusCompilationError,
 			Stderr: compRes.Error,
 		}, nil
 	}
 
 	// Each testcase has its own timeout window. Compilation time is not counted.
-	var judgeResult dtos.JudgeResultDto
+	var judgeResult api.JudgeResultDto
 	var peakMemoryKB, peakTimeNS int64
 
 	for _, testCase := range dto.TestCases {
@@ -78,7 +79,7 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 		if err != nil {
 			if runCtx.Err() != nil {
 				judgeResult.Total = len(dto.TestCases)
-				return &dtos.JudgeResponseDto{Status: constants.StatusTLE, Stderr: "time limit exceeded", Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
+				return &api.JudgeResponseDto{Status: constants.StatusTLE, Stderr: "time limit exceeded", Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
 			}
 			return nil, fmt.Errorf("execute run request: %w", err)
 		}
@@ -89,7 +90,7 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 		passed := runnerResp.Success && (runnerResp.Output == testCase.ExpectedOutput)
 		if !runnerResp.Success {
 
-			judgeResult.TestCases = append(judgeResult.TestCases, dtos.JudgeTestCaseResultDto{
+			judgeResult.TestCases = append(judgeResult.TestCases, api.JudgeTestCaseResultDto{
 				Input: testCase.Input, ExpectedOutput: testCase.ExpectedOutput,
 				ActualOutput: runnerResp.Output, Passed: false,
 			})
@@ -101,14 +102,14 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 				status = constants.StatusMLE
 			}
 			judgeResult.Total = len(dto.TestCases)
-			return &dtos.JudgeResponseDto{Status: status, Stderr: runnerResp.Error, Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
+			return &api.JudgeResponseDto{Status: status, Stderr: runnerResp.Error, Result: judgeResult, MemoryKB: peakMemoryKB, ExecutionTimeNs: peakTimeNS}, nil
 		}
 
 		// Only return the failed test case and summary
 		// Rest of the testcases are hidden from client-side.
 
 		if !passed {
-			judgeResult.TestCases = append(judgeResult.TestCases, dtos.JudgeTestCaseResultDto{
+			judgeResult.TestCases = append(judgeResult.TestCases, api.JudgeTestCaseResultDto{
 				Input: testCase.Input, ExpectedOutput: testCase.ExpectedOutput,
 				ActualOutput: runnerResp.Output, Passed: false,
 			})
@@ -118,6 +119,6 @@ func (s *JudgeService) Judge(dto dtos.JudgeRequestDto) (*dtos.JudgeResponseDto, 
 	}
 	judgeResult.Total = len(dto.TestCases)
 
-	return &dtos.JudgeResponseDto{Result: judgeResult, Status: constants.StatusSuccess, MemoryKB: peakMemoryKB,
+	return &api.JudgeResponseDto{Result: judgeResult, Status: constants.StatusSuccess, MemoryKB: peakMemoryKB,
 		ExecutionTimeNs: peakTimeNS}, nil
 }

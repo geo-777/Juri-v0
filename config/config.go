@@ -12,6 +12,7 @@ type Config struct {
 	Port          string
 	GinMode       string
 	WorkspaceRoot string
+	RedisAddress  string
 }
 
 // Load reads configuration values from the environment and dotenv file.
@@ -26,6 +27,7 @@ func Load() (*Config, error) {
 		Port:          os.Getenv("PORT"),
 		GinMode:       os.Getenv("GIN_MODE"),
 		WorkspaceRoot: os.Getenv("WORKSPACE_ROOT"),
+		RedisAddress:  os.Getenv("REDIS_ADDRESS"),
 	}
 
 	return &config, err

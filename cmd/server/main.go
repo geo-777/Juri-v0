@@ -1,16 +1,18 @@
 package main
 
 import (
+	"context"
 	"juri/config"
-	"juri/internals/api/handlers"
+	"juri/internals/api"
 	"juri/internals/executor/workspace"
+	"juri/internals/judge"
 
-	"juri/internals/services"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/moby/moby/client"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -27,14 +29,24 @@ func main() {
 		log.Fatal("failed to load configuration:", err)
 	}
 
+	//init redis client
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Fatal("failed to connect to Redis:", err)
+	}
+
 	// Wire the compiler, runner, and service layers together.
 	runnerFactory := workspace.NewDockerRunnerFactory(cfg, dockerClient)
 
-	runService := services.NewRunService(runnerFactory)
-	judgeService := services.NewJudgeService(runnerFactory)
+	_ = judge.NewJudgeService(runnerFactory)
 
-	runHandler := handlers.NewRunHandler(runService)
-	judgeHandler := handlers.NewJudgeHandler(judgeService)
+	// Wire up submission service and handler
+	submissionSvc := api.NewSubmissionService(redisClient)
+	submissionHandler := api.NewHTTPHandler(submissionSvc)
 
 	// Configure the Gin router and register the public endpoints.
 	router := gin.Default()
@@ -47,9 +59,8 @@ func main() {
 		})
 	})
 
-	// Register the submission and judging routes.
-	router.POST("/run", runHandler.Run)
-	router.POST("/judge", judgeHandler.Judge)
+	//submission route
+	router.POST("/submissions", submissionHandler.CreateSubmission)
 
 	// Start the HTTP server.
 	if err := router.Run(":" + cfg.Port); err != nil {
