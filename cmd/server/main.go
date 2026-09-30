@@ -54,7 +54,7 @@ func main() {
 	_ = judge.NewJudgeService(runnerFactory)
 
 	// Wire up submission service and handler
-	submissionSvc := api.NewSubmissionService(redisClient)
+	submissionSvc := api.NewSubmissionService(pool, redisClient)
 	submissionHandler := api.NewHTTPHandler(submissionSvc)
 
 	// Configure the Gin router and register the public endpoints.
@@ -68,8 +68,9 @@ func main() {
 		})
 	})
 
-	//submission route
+	// Submission routes
 	router.POST("/submissions", submissionHandler.CreateSubmission)
+	router.GET("/submissions/:id", submissionHandler.GetSubmission)
 
 	// Start the HTTP server.
 	if err := router.Run(":" + cfg.Port); err != nil {

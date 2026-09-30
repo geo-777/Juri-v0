@@ -1,7 +1,0 @@
-POST http://localhost:8000/run
-Content-Type: application/json
-
-{
-  "language": "java",
-  "source_code": "public class Main {\n    public static void main(String[] args) {\n        int i = 1;\n        while (i <= 5) {\n            System.out.println(\"Hello World \" + i);\n            i++;\n        }\n    }\n}"
-}

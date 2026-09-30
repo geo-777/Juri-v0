@@ -10,16 +10,18 @@ fi
 
 # Ensure DATABASE_URL is available
 if [ -z "${DATABASE_URL:-}" ]; then
-    echo "Error: DATABASE_URL is not set in .env, searching for .env...."
-    # Check if .env exists
+    echo "DATABASE_URL is not set in the environment; loading .env..."
     if [ ! -f .env ]; then
         echo "Error: .env file not found."
         exit 1
     fi
-    # Load environment variables
     set -a
     source .env
     set +a
+    if [ -z "${DATABASE_URL:-}" ]; then
+        echo "Error: DATABASE_URL is missing or empty in .env."
+        exit 1
+    fi
 fi
 
 command="${1:-}"

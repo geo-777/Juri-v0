@@ -12,12 +12,10 @@ type SubmissionTestCaseDto struct {
 
 // SubmissionRequestDto captures the input payload for a judge request.
 type SubmissionRequestDto struct {
-	Language constants.Language `json:"language" binding:"required,oneof=cpp c java python"`
-
-	SourceCode string `json:"source_code" binding:"required"`
-
-	TestCases []SubmissionTestCaseDto `json:"test_cases" binding:"required,min=1,dive"`
-
+	Language    constants.Language      `json:"language" binding:"required,oneof=cpp c java python"`
+	SourceCode  string                  `json:"source_code" binding:"required"`
+	TestCases   []SubmissionTestCaseDto `json:"test_cases" binding:"required,min=1,dive"`
+	CallbackURL string                  `json:"callback_url" binding:"omitempty"`
 	// Optional overrides
 	TimeLimitMs int `json:"time_limit_ms" binding:"omitempty,gte=1,lte=15000"`
 	MemoryLimit int `json:"memory_limit_kb" binding:"omitempty,gte=1,lte=1048576"`
@@ -28,24 +26,26 @@ type JudgeTestCaseResultDto struct {
 	Input          string `json:"input"`
 	ExpectedOutput string `json:"expected_output"`
 	ActualOutput   string `json:"actual_output"`
-
-	Passed bool `json:"passed"`
+	Passed         bool   `json:"passed"`
 }
 
 type JudgeResultDto struct {
-	Passed int `json:"passed"`
-	Total  int `json:"total"`
-
+	Passed    int                      `json:"passed"`
+	Total     int                      `json:"total"`
 	TestCases []JudgeTestCaseResultDto `json:"test_cases,omitempty"`
+}
+type SubmissionResponseDTO struct {
+	ID     int64            `json:"id"`
+	Status constants.Status `json:"status"`
 }
 
 type JudgeResponseDto struct {
+	ID     int64            `json:"id"`
 	Status constants.Status `json:"status"`
 	// Compilation/runtime errors.
 	Stderr string `json:"stderr"`
 	// Maximum resource usage across all test cases.
-	ExecutionTimeNs int64 `json:"execution_time_ns"`
-	MemoryKB        int64 `json:"memory_kb"`
-
-	Result JudgeResultDto `json:"result"`
+	ExecutionTimeNs int64          `json:"execution_time_ns"`
+	MemoryKB        int64          `json:"memory_kb"`
+	Result          JudgeResultDto `json:"result"`
 }

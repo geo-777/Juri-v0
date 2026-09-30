@@ -14,9 +14,16 @@ const (
 type Status string
 
 const (
+	StatusPending Status = "pending"
+	StatusQueued  Status = "queued"
+	StatusRunning Status = "running"
+
 	StatusSuccess          Status = "success"
+	StatusWrongAnswer      Status = "wrong_answer"
 	StatusCompilationError Status = "compilation_error"
 	StatusRuntimeError     Status = "runtime_error"
 	StatusTLE              Status = "time_limit_exceeded"
 	StatusMLE              Status = "memory_limit_exceeded"
+
+	StatusSystemError Status = "system_error"
 )
