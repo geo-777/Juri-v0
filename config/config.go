@@ -13,6 +13,8 @@ type Config struct {
 	GinMode       string
 	WorkspaceRoot string
 	RedisAddress  string
+	RedisPassword string
+	DatabaseURL   string
 }
 
 // Load reads configuration values from the environment and dotenv file.
@@ -28,6 +30,9 @@ func Load() (*Config, error) {
 		GinMode:       os.Getenv("GIN_MODE"),
 		WorkspaceRoot: os.Getenv("WORKSPACE_ROOT"),
 		RedisAddress:  os.Getenv("REDIS_ADDRESS"),
+		DatabaseURL:   os.Getenv("DATABASE_URL"),
+
+		RedisPassword: os.Getenv("REDIS_PASSWORD"),
 	}
 
 	return &config, err

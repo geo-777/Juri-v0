@@ -3,7 +3,7 @@ package workspace
 import (
 	"fmt"
 	"juri/internals/constants"
-	"juri/internals/utils"
+	"juri/pkg/utils"
 	"os"
 	"path/filepath"
 )

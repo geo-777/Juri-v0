@@ -6,6 +6,7 @@ import (
 	"juri/internals/api"
 	"juri/internals/executor/workspace"
 	"juri/internals/judge"
+	"juri/pkg/database"
 
 	"log"
 	"net/http"
@@ -29,10 +30,18 @@ func main() {
 		log.Fatal("failed to load configuration:", err)
 	}
 
+	//setting up db connection
+	pool, err := database.ConnectDatabase(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal("Database connection failed.")
+		return
+	}
+	defer pool.Close()
+
 	//init redis client
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     cfg.RedisAddress,
+		Password: cfg.RedisPassword,
 		DB:       0,
 	})
 	if err := redisClient.Ping(context.Background()).Err(); err != nil {
