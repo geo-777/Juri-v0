@@ -4,26 +4,16 @@ import (
 	"context"
 	"juri/config"
 	"juri/internals/api"
-	"juri/internals/executor/workspace"
-	"juri/internals/judge"
 	"juri/pkg/database"
 
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/moby/moby/client"
 	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	// Initialize the Docker client used by the execution backends.
-	dockerClient, err := client.New(client.FromEnv)
-	if err != nil {
-		panic(err)
-	}
-	defer dockerClient.Close()
-
 	// Load runtime settings from the environment.
 	cfg, err := config.Load()
 	if err != nil {
@@ -47,11 +37,6 @@ func main() {
 	if err := redisClient.Ping(context.Background()).Err(); err != nil {
 		log.Fatal("failed to connect to Redis:", err)
 	}
-
-	// Wire the compiler, runner, and service layers together.
-	runnerFactory := workspace.NewDockerRunnerFactory(cfg, dockerClient)
-
-	_ = judge.NewJudgeService(runnerFactory)
 
 	// Wire up submission service and handler
 	submissionSvc := api.NewSubmissionService(pool, redisClient)
