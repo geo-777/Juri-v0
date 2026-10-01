@@ -118,7 +118,10 @@ func (s *JudgeService) Judge(dto api.SubmissionRequestDto) (*api.JudgeResponseDt
 		judgeResult.Passed += 1
 	}
 	judgeResult.Total = len(dto.TestCases)
-
-	return &api.JudgeResponseDto{Result: judgeResult, Status: constants.StatusSuccess, MemoryKB: peakMemoryKB,
+	status := constants.StatusSuccess
+	if judgeResult.Passed != judgeResult.Total {
+		status = constants.StatusWrongAnswer
+	}
+	return &api.JudgeResponseDto{Result: judgeResult, Status: status, MemoryKB: peakMemoryKB,
 		ExecutionTimeNs: peakTimeNS}, nil
 }

@@ -5,6 +5,8 @@ import (
 	"juri/config"
 	"juri/internals/executor/workspace"
 	"juri/internals/judge"
+	"juri/internals/worker"
+	"juri/pkg/database"
 	"log"
 	"strconv"
 	"time"
@@ -29,6 +31,12 @@ func main() {
 		log.Fatal("failed to load configuration:", err)
 	}
 
+	db, err := database.ConnectDatabase(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal("failed to connect to database:", err)
+	}
+	defer db.Close()
+
 	//init redis client
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddress,
@@ -38,10 +46,12 @@ func main() {
 	if err := redisClient.Ping(context.Background()).Err(); err != nil {
 		log.Fatal("failed to connect to Redis:", err)
 	}
+	defer redisClient.Close()
 
 	// Wire the compiler, runner, and service layers together.
 	runnerFactory := workspace.NewDockerRunnerFactory(cfg, dockerClient)
 	judgeService := judge.NewJudgeService(runnerFactory)
+	workerService := worker.New(db, judgeService)
 
 	//redis listener
 
@@ -58,14 +68,21 @@ func main() {
 			continue
 		}
 
-		submissionID, err := strconv.Atoi(result[1])
+		submissionID, err := strconv.ParseInt(result[1], 10, 64)
 		if err != nil {
 			log.Printf("invalid submission ID: %v", err)
 			continue
 		}
 
-		// process submissionID
-		log.Printf("Processing submissionID : %d", submissionID)
+		log.Printf("processing submission %d", submissionID)
+		if err := workerService.Process(ctx, submissionID); err != nil {
+			log.Printf("processing submission %d failed: %v", submissionID, err)
+			// BRPOP removes an ID from the list, so put it back when the failure
+			// prevented us from recording a terminal state.
+			if pushErr := redisClient.RPush(ctx, "submission_queue", submissionID).Err(); pushErr != nil {
+				log.Printf("could not requeue submission %d: %v", submissionID, pushErr)
+			}
+		}
 	}
 
 }
