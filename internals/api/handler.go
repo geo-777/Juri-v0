@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -27,7 +28,7 @@ func (h *HTTPHandler) CreateSubmission(ctx *gin.Context) {
 		return
 	}
 
-	response, err := h.service.CreateSubmission(reqBody)
+	response, err := h.service.CreateSubmission(ctx.Request.Context(), reqBody)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": "internal server error",
@@ -44,9 +45,9 @@ func (h *HTTPHandler) GetSubmission(ctx *gin.Context) {
 		return
 	}
 
-	response, err := h.service.GetSubmission(id)
+	response, err := h.service.GetSubmission(ctx.Request.Context(), id)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "submission not found"})
 			return
 		}

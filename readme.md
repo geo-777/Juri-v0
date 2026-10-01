@@ -1,7 +1,9 @@
 # Juri v0
 
-Juri is a small online judge that compiles and runs submitted programs against
-test cases. This is an early version, intended for development and evaluation.
+Juri is a lightweight, standalone code-judging microservice designed to compile and execute submitted programs against test cases.
+
+It is intended to serve as the execution and judging layer for coding platforms, handling tasks such as compilation, program execution, test-case evaluation, resource limiting, and result reporting. Juri is isolated from the main application so that code execution can be scaled and managed independently.
+The current version is an early-stage implementation intended primarily for development, experimentation, and evaluation.
 
 ## Requirements
 
@@ -26,7 +28,7 @@ Make sure Go's bin directory is on your `PATH`.
 
    ```dotenv
    PORT=8000
-   WORKSPACE_ROOT=/absolute/path/to/Juri-v0/temp-jobs
+   WORKSPACE_ROOT=/relative/path/to/Juri-v0/temp-jobs
    REDIS_ADDRESS=localhost:6379
    REDIS_PASSWORD=
    DATABASE_URL=postgres://postgres:postgres@localhost:5432/juri?sslmode=disable

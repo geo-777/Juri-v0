@@ -32,6 +32,9 @@ func NewDockerRunnerFactory(
 	}
 }
 
+// DONT SPLIT THIS FUNCITON NOW.
+// This function size would decrease greatly once container pools are implemented.
+
 func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constants.Language, sourceCode string, memoryLimitKB int) (*executor.Runner, error) {
 	// Create a temporary workspace for the submitted source file.
 	sourceFilePath, err := CreateFiles(language, sourceCode, d.cfg.WorkspaceRoot)

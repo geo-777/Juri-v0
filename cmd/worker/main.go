@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"juri/config"
+	"juri/internals/constants"
 	"juri/internals/executor/workspace"
 	"juri/internals/judge"
 	"juri/internals/worker"
@@ -56,7 +57,7 @@ func main() {
 	//redis listener
 
 	for {
-		result, err := redisClient.BRPop(ctx, 0, "submission_queue").Result()
+		result, err := redisClient.BRPop(ctx, 0, constants.SubmissionQueueName).Result()
 		if err != nil {
 			if ctx.Err() != nil {
 				log.Println("worker shutting down")
@@ -79,7 +80,7 @@ func main() {
 			log.Printf("processing submission %d failed: %v", submissionID, err)
 			// BRPOP removes an ID from the list, so put it back when the failure
 			// prevented us from recording a terminal state.
-			if pushErr := redisClient.RPush(ctx, "submission_queue", submissionID).Err(); pushErr != nil {
+			if pushErr := redisClient.RPush(ctx, constants.SubmissionQueueName, submissionID).Err(); pushErr != nil {
 				log.Printf("could not requeue submission %d: %v", submissionID, pushErr)
 			}
 		}

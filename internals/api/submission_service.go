@@ -23,8 +23,8 @@ func NewSubmissionService(db *pgxpool.Pool, redisClient *redis.Client) *Submissi
 	return &SubmissionService{db: db, redisClient: redisClient}
 }
 
-func (s *SubmissionService) CreateSubmission(dto SubmissionRequestDto) (*SubmissionResponseDTO, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (s *SubmissionService) CreateSubmission(parent context.Context, dto SubmissionRequestDto) (*SubmissionResponseDTO, error) {
+	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 
 	testCases, err := json.Marshal(dto.TestCases)
@@ -50,19 +50,23 @@ func (s *SubmissionService) CreateSubmission(dto SubmissionRequestDto) (*Submiss
 		return nil, fmt.Errorf("insert submission: %w", err)
 	}
 
-	err = s.redisClient.RPush(ctx, "submission_queue", id).Err()
+	err = s.redisClient.RPush(ctx, constants.SubmissionQueueName, id).Err()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("enqueue submission %d: %w", id, err)
 	}
 
 	return &SubmissionResponseDTO{ID: id, Status: constants.StatusPending}, nil
 }
 
-func (s *SubmissionService) GetSubmission(id int64) (*JudgeResponseDto, error) {
+func (s *SubmissionService) GetSubmission(parent context.Context, id int64) (*JudgeResponseDto, error) {
+	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	defer cancel()
+
 	var response JudgeResponseDto
 	var status constants.Status
 	var resultJSON []byte
-	err := s.db.QueryRow(context.Background(), `
+
+	err := s.db.QueryRow(ctx, `
 		SELECT id, status, COALESCE(stderr, ''), COALESCE(execution_time_ns, 0),
 		       COALESCE(memory_kb, 0), COALESCE(result, '{}'::jsonb)
 		FROM submissions
