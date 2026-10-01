@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"juri/internals/constants"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
@@ -39,6 +41,7 @@ func (h *HTTPHandler) CreateSubmission(ctx *gin.Context) {
 }
 
 func (h *HTTPHandler) GetSubmission(ctx *gin.Context) {
+	// need int64
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil || id < 1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid submission id"})
@@ -52,6 +55,11 @@ func (h *HTTPHandler) GetSubmission(ctx *gin.Context) {
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	//to prevent returning of object with default valuess
+	if response.Status == constants.StatusPending {
+		ctx.JSON(http.StatusOK, SubmissionResponseDTO{ID: response.ID, Status: response.Status})
 		return
 	}
 	ctx.JSON(http.StatusOK, response)

@@ -1,4 +1,4 @@
-POST http://localhost:8000/judge
+POST http://localhost:8000/submissions
 Content-Type: application/json
 
 {

@@ -57,14 +57,15 @@ func main() {
 	//redis listener
 
 	for {
-		result, err := redisClient.BRPop(ctx, 0, constants.SubmissionQueueName).Result()
+		result, err := redisClient.BLPop(ctx, 0, constants.SubmissionQueueName).Result() //pauses until poped
+
 		if err != nil {
 			if ctx.Err() != nil {
 				log.Println("worker shutting down")
 				return
 			}
 
-			log.Printf("redis BRPOP error: %v", err)
+			log.Printf("redis BLPOP error: %v", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -78,7 +79,7 @@ func main() {
 		log.Printf("processing submission %d", submissionID)
 		if err := workerService.Process(ctx, submissionID); err != nil {
 			log.Printf("processing submission %d failed: %v", submissionID, err)
-			// BRPOP removes an ID from the list, so put it back when the failure
+			// BLPOP removes an ID from the list, so put it back when the failure
 			// prevented us from recording a terminal state.
 			if pushErr := redisClient.RPush(ctx, constants.SubmissionQueueName, submissionID).Err(); pushErr != nil {
 				log.Printf("could not requeue submission %d: %v", submissionID, pushErr)

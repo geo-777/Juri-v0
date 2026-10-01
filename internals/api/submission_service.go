@@ -87,7 +87,7 @@ func (s *SubmissionService) GetSubmission(parent context.Context, id int64) (*Ju
 	}
 
 	if status == constants.StatusQueued || status == constants.StatusRunning {
-		response.Status = constants.StatusPending
+		response.Status = constants.StatusPending //coalscing both states for client
 		return &response, nil
 	}
 	response.Status = status
