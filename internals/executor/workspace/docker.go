@@ -47,7 +47,7 @@ func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constan
 
 	pidLimit := int64(128)
 	if memoryLimitKB <= 0 {
-		memoryLimitKB = 128 * 1024
+		memoryLimitKB = constants.DefaultMemoryLimitKB
 	}
 	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
@@ -70,7 +70,15 @@ func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constan
 				PidsLimit: &pidLimit,     // takes only pointer to int64
 			},
 
-			Binds: []string{sourceDirPath + ":/workspace"},
+			Binds:          []string{sourceDirPath + ":/workspace"},
+			ReadonlyRootfs: true,
+			SecurityOpt: []string{
+				"no-new-privileges:true",
+			},
+			CapDrop: []string{"ALL"},
+			Tmpfs: map[string]string{
+				"/tmp": "rw,noexec,nosuid,size=64m",
+			},
 		},
 	})
 

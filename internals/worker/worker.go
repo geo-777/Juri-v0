@@ -39,6 +39,7 @@ func (w *Worker) Process(ctx context.Context, id int64) error {
 	var submission api.SubmissionRequestDto
 	var callbackURL string
 	var casesJSON []byte
+
 	err := w.db.QueryRow(ctx, `
 		UPDATE submissions
 		SET status = 'running', updated_at = NOW()

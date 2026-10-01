@@ -26,11 +26,11 @@ func (s *JudgeService) Judge(dto api.SubmissionRequestDto) (*api.JudgeResponseDt
 	// Enforcing defaults when the request does not specify limits.
 	timeLimit := dto.TimeLimitMs
 	if timeLimit == 0 {
-		timeLimit = 1000
+		timeLimit = constants.DefaultTimeLimitMs
 	}
 	memoryLimit := dto.MemoryLimit
 	if memoryLimit == 0 {
-		memoryLimit = 128 * 1024
+		memoryLimit = constants.DefaultMemoryLimitKB
 	}
 	setupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

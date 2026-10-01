@@ -16,7 +16,7 @@ func CreateFiles(language constants.Language, sourceCode string, root string) (s
 	// Build the workspace path for this submission.
 	jobDir := filepath.Join(root, "job-"+id)
 	// Create the directory structure needed for the job.
-	if err := os.MkdirAll(jobDir, 0777); err != nil {
+	if err := os.MkdirAll(jobDir, 0700); err != nil {
 		return "", fmt.Errorf("create job directory: %w", err)
 	}
 

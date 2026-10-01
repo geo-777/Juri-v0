@@ -288,7 +288,7 @@ func run(req Request) Response {
 	defer cancel()
 
 	memFile := filepath.Join(WorkDir, MemoryStatFile)
-	_ = os.Remove(memFile) // best-effort cleanup of any stale stat file
+	defer os.Remove(memFile) // best-effort cleanup of any stale stat file
 
 	// Use /usr/bin/time to capture peak RSS; fall back gracefully if the
 	// binary is missing from the sandbox image (common if the Dockerfile
