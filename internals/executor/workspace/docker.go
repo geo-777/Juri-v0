@@ -6,7 +6,6 @@ import (
 	"juri/config"
 	"juri/internals/constants"
 	"juri/internals/executor"
-	"juri/internals/executor/languages"
 	"juri/internals/executor/protocol"
 	"log"
 	"os"
@@ -55,7 +54,7 @@ func (d *DockerRunnerFactory) CreateRunner(ctx context.Context, language constan
 	// Create a container with resource limits and the mounted workspace.
 	resp, err := d.docker.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config: &container.Config{
-			Image:        languages.ImageNames[language],
+			Image:        constants.ImageNames[language],
 			WorkingDir:   "/workspace",
 			AttachStdin:  true,
 			AttachStdout: true,
